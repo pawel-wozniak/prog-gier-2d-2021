@@ -23,12 +23,14 @@
 	  var radius = 70;
 	  var centerX2 = canvas.width / 6 + 2*(canvas.width / 6);
 	  var centerY2 = canvas.height / 2;
+	  var centerX3 = canvas.width / 6 + 4*(canvas.width / 6);
+	  var centerY3 = canvas.height / 2;
 	  var color = "green";
 	  var color2 = 0;
 	  var flag = 0;
 	
 	<!--circle 1-->	
-	function animate() {	
+	function animate1() {	
 		context.beginPath();
 		context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
 		if (color == "green") {
@@ -38,7 +40,7 @@
 		}
 		context.fillStyle = color;
 		context.fill();
-		context.lineWidth = 5;
+		context.lineWidth = 4;
 		context.strokeStyle = '#003300';
 		context.stroke();
 	}
@@ -58,16 +60,48 @@
 			flag =0;
 			color2=0;
 		}
-		
-		context.fillStyle = 'rgb(0, '+ (255-color2) +', '+color2+')';
+		var grd = context.createRadialGradient(centerX2, centerY2, 1, centerX2, centerY2, radius);
+		grd.addColorStop(0, 'rgb(0, '+ (color2) +', '+(255-color2)+')');
+		grd.addColorStop(1, 'rgb(0, '+ (255-color2) +', '+color2+')');
+		context.fillStyle = grd;
 		context.fill();
-		context.lineWidth = 5;
+		context.lineWidth = 4;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	}
+	
+		<!--circle 3-->
+	function animate3() {
+		context.clearRect( canvas.width / 6 + 3*(canvas.width / 6), 0 , 800, 600 );
+		context.beginPath();
+		context.arc(centerX3, centerY3, radius, 0, 2 * Math.PI, false);
+		if (flag == 0) color2 = color2 +4;
+		if (flag == 1) color2 = color2 -4;
+
+		if (color2 > 255) {
+			flag =1;
+			color2=255;
+		}
+		if (color2 < 0) {
+			flag =0;
+			color2=0;
+		}
+		
+		centerY3 = (canvas.height / 2) + (canvas.height / 2) *(1/(color2/4));
+		
+		var grd = context.createRadialGradient(centerX3, centerY3, 5, centerX3, centerY3, radius);
+		grd.addColorStop(0, 'rgb(0, '+ (color2) +', '+(255-color2)+')');
+		grd.addColorStop(1, 'rgb(0, '+ (255-color2) +', '+color2+')');
+		context.fillStyle = grd;
+		context.fill();
+		context.lineWidth = 4;
 		context.strokeStyle = '#003300';
 		context.stroke();
 	}
 
-	var t1=setInterval(animate,1000);
+	var t1=setInterval(animate1,1000);
 	var t2=setInterval(animate2,50);
+	var t3=setInterval(animate3,50);
 	</script>
 </body>
 
