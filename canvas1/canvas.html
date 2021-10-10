@@ -80,19 +80,18 @@
 	}
 	
 	function animate_color() {
-		if (flag == 0) color2 = color2 + Math.floor(255/19);
-		if (flag == 1) color2 = color2 - Math.floor(255/19);
+		if (flag == 0) color2 = color2 + Math.floor(247/19);
+		if (flag == 1) color2 = color2 - Math.floor(247/19);
 
-		if (color2 > 255) {
+		if (color2 > 247) {
 			flag =1;
-			color2=255;
+			color2=247;
 		}
 		if (color2 < 0) {
 			flag =0;
 			color2=0;
 		}
 	}
-	
 	
 	animate1();
 	animate2();
