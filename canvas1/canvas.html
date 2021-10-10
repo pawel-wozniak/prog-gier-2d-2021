@@ -70,7 +70,7 @@
 		context.stroke();
 	}
 	
-		<!--circle 3-->
+	<!--circle 3-->
 	function animate3() {
 		context.clearRect( canvas.width / 6 + 3*(canvas.width / 6), 0 , 800, 600 );
 		context.beginPath();
@@ -87,11 +87,11 @@
 			color2=0;
 		}
 		
-		centerY3 = (canvas.height / 2) + (canvas.height / 2) *(1/(color2/4));
+		centerY3 = (canvas.height / 2) - 0.5*(canvas.height / 2) * Math.sin(0.5*Math.PI*(color2/255));
 		
 		var grd = context.createRadialGradient(centerX3, centerY3, 5, centerX3, centerY3, radius);
-		grd.addColorStop(0, 'rgb(0, '+ (color2) +', '+(255-color2)+')');
-		grd.addColorStop(1, 'rgb(0, '+ (255-color2) +', '+color2+')');
+		grd.addColorStop(1, 'rgb(0, '+ (color2) +', '+(255-color2)+')');
+		grd.addColorStop(0, 'rgb(0, '+ (255-color2) +', '+color2+')');
 		context.fillStyle = grd;
 		context.fill();
 		context.lineWidth = 4;
