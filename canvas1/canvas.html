@@ -21,10 +21,16 @@
 	  var centerX = canvas.width / 6;
 	  var centerY = canvas.height / 2;
 	  var radius = 70;
+	  var centerX2 = canvas.width / 6 + 2*(canvas.width / 6);
+	  var centerY2 = canvas.height / 2;
 	  var color = "green";
+	  var color2 = 0;
+	  var flag = 0;
 	  
 	function animate() {
-		context.clearRect( 0, 0 , 800, 600 );		 
+		context.clearRect( 0, 0 , 800, 600 );	
+		
+		<!--circle 1-->
 		context.beginPath();
 		context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
 		if (color == "green") {
@@ -38,8 +44,32 @@
 		context.strokeStyle = '#003300';
 		context.stroke();
 	}
+	
+	function animate2() {
+		<!--context.clearRect( 0, 0 , 800, 600 );	-->
 
-	var t=setInterval(animate,1000);
+		<!--circle 2-->
+		context.beginPath();
+		context.arc(centerX2, centerY2, radius, 0, 2 * Math.PI, false);
+		if (color2 > 255) {
+			flag =1;
+		}
+		if (color2 < 0) {
+			flag =0;
+		}
+		if (flag == 0) color2 = color2 +4;
+		if (flag == 1) color2 = color2 -4;
+
+		
+		context.fillStyle = 'rgb(0, '+ (255-color2) +', '+color2+')';
+		context.fill();
+		context.lineWidth = 5;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	}
+
+	var t1=setInterval(animate,1000);
+	var t2=setInterval(animate2,50);
 	</script>
 </body>
 
