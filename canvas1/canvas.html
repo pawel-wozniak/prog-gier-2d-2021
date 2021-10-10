@@ -20,7 +20,7 @@
 	  
 	  var centerX = canvas.width / 6;
 	  var centerY = canvas.height / 2;
-	  var radius = 70;
+	  var radius = 80;
 	  var centerX2 = canvas.width / 6 + 2*(canvas.width / 6);
 	  var centerY2 = canvas.height / 2;
 	  var centerX3 = canvas.width / 6 + 4*(canvas.width / 6);
@@ -49,20 +49,11 @@
 		<!--context.clearRect( 0, 0 , 800, 600 );	-->
 		context.beginPath();
 		context.arc(centerX2, centerY2, radius, 0, 2 * Math.PI, false);
-		if (flag == 0) color2 = color2 +4;
-		if (flag == 1) color2 = color2 -4;
 
-		if (color2 > 255) {
-			flag =1;
-			color2=255;
-		}
-		if (color2 < 0) {
-			flag =0;
-			color2=0;
-		}
-		var grd = context.createRadialGradient(centerX2, centerY2, 1, centerX2, centerY2, radius);
-		grd.addColorStop(0, 'rgb(0, '+ (color2) +', '+(255-color2)+')');
-		grd.addColorStop(1, 'rgb(0, '+ (255-color2) +', '+color2+')');
+		var grd = context.createRadialGradient(centerX2, centerY2, radius*(color2/255), centerX2, centerY2, 1+radius*(color2/255));
+		grd.addColorStop(0, 'green');
+		grd.addColorStop(1, 'blue');
+
 		context.fillStyle = grd;
 		context.fill();
 		context.lineWidth = 4;
@@ -75,8 +66,22 @@
 		context.clearRect( canvas.width / 6 + 3*(canvas.width / 6), 0 , 800, 600 );
 		context.beginPath();
 		context.arc(centerX3, centerY3, radius, 0, 2 * Math.PI, false);
-		if (flag == 0) color2 = color2 +4;
-		if (flag == 1) color2 = color2 -4;
+		
+		centerY3 = (canvas.height / 2) - 0.5*(canvas.height / 2) * Math.sin(0.5*Math.PI*(Math.abs(color2-128)/128));
+		
+		var grd2 = context.createRadialGradient(centerX3, centerY3, 1, centerX3, centerY3, radius*4);
+		grd2.addColorStop(0, 'rgb(0, '+ (color2) +', '+(255-color2)+')');
+		grd2.addColorStop(1, 'rgb(0, '+ (255-color2) +', '+color2+')');
+		context.fillStyle = grd2;
+		context.fill();
+		context.lineWidth = 4;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	}
+	
+	function animate_color() {
+		if (flag == 0) color2 = color2 + Math.floor(255/20);
+		if (flag == 1) color2 = color2 - Math.floor(255/20);
 
 		if (color2 > 255) {
 			flag =1;
@@ -86,24 +91,17 @@
 			flag =0;
 			color2=0;
 		}
-		
-		centerY3 = (canvas.height / 2) - 0.5*(canvas.height / 2) * Math.sin(0.5*Math.PI*(color2/255));
-		
-		var grd2 = context.createRadialGradient(centerX3, centerY3, radius*(color2/255), centerX3, centerY3, 1+radius*(color2/255));
-		grd2.addColorStop(0, 'green');
-		grd2.addColorStop(1, 'blue');
-		context.fillStyle = grd2;
-		context.fill();
-		context.lineWidth = 4;
-		context.strokeStyle = '#003300';
-		context.stroke();
 	}
+	
+	
 	animate1();
 	animate2();
 	animate3();
+	animate_color();
 	var t1=setInterval(animate1,1000);
 	var t2=setInterval(animate2,50);
 	var t3=setInterval(animate3,50);
+	var t=setInterval(animate_color,50);
 	</script>
 </body>
 
