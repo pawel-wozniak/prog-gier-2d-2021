@@ -25,11 +25,11 @@
 	  var paddleColor = "green"
 	  
 	  var bulletRadius = 10;
-	  var bulletArray = new Array();
+	  let  bulletArray = new Array();
 	  
 	  var targetRadius = 40;
 	  var targetColors = ["green", "blue", "red", "black"];
-	  var targetArray = new Array();  
+	  let  targetArray = new Array();  
 	  
 	  function drawPaddle() {	
 		context.beginPath();
@@ -44,6 +44,7 @@
 	 
 	  function drawBullets() {	
 		for (var bullet in bulletArray) {
+			
 			console.log(bullet.posX);
 			context.beginPath();
 			context.arc(bullet.posX, bullet.posY, bulletRadius, 0, 2 * Math.PI, false);
@@ -86,10 +87,16 @@
 		else if(event.keyCode == 32) {
 			fireBullet();
 		}
+		if(paddlePosX <0) {
+			paddlePosX =0;
+		}
+		if(paddlePosX > 800-paddleWidth) {
+			paddlePosX = 800-paddleWidth;
+		}
 	});
 	
 	
-	var t1=setInterval(redrawScreen,20);
+	setInterval(redrawScreen,20);
 	  
 
 	</script>
