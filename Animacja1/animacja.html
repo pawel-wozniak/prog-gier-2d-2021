@@ -89,7 +89,7 @@
 		});
 	 }
 	 
-	 function drawTergets() {	
+	 function drawTargets() {	
 		targetArray.forEach(function (target) {			
 			console.log(target.posX);
 			context.beginPath();
@@ -153,6 +153,7 @@
 	 }
 	
 	function populateTargets() {
+		if(targetLimit > targetArray.length) {
 			if(targetAppearDelay == 0) {
 				addTarget();
 				targetAppearDelay = targetAppearDelayLimit;
@@ -160,6 +161,7 @@
 			else {
 				targetAppearDelay = targetAppearDelay - 1;
 			}
+		}
 	 }
 	 
 	 function fireBullet() {
@@ -172,7 +174,7 @@
 	 
 	 function addTarget() {
 		var myObj = new Object();
-		myObj.posX = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin,
+		myObj.posX = Math.floor(Math.random() * (800 - targetRadiusMax)) + targetRadiusMax,
 		myObj.posY = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin;
 		myObj.radius = Math.floor(Math.random() * (targetRadiusMax - targetRadiusMin)) + targetRadiusMin;
 		myObj.color = targetColors[Math.floor(Math.random() * targetColors.length)];
