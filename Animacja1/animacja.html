@@ -43,7 +43,22 @@
 		clearScreen();
 		drawPaddle();
 	 }
-	  
+	 
+	 function  fireBullet() {
+	 
+	 }
+	 
+	document.addEventListener('keydown', function(event) {
+		if(event.keyCode == 37) {
+			paddlePosX -= 30;
+		}
+		else if(event.keyCode == 39) {
+			paddlePosX += 30;
+		}
+		else if(event.keyCode == 32) {
+			fireBullet();
+		}
+	});
 	
 	
 	var t1=setInterval(redrawScreen,20);
