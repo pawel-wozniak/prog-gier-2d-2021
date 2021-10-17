@@ -43,8 +43,7 @@
 	 }
 	 
 	  function drawBullets() {	
-		for (var bullet in bulletArray) {
-			
+		bulletArray.forEach(function (bullet) {			
 			console.log(bullet.posX);
 			context.beginPath();
 			context.arc(bullet.posX, bullet.posY, bulletRadius, 0, 2 * Math.PI, false);
@@ -54,7 +53,13 @@
 			context.lineWidth = 4;
 			context.strokeStyle = '#003300';
 			context.stroke();
-		}
+		});
+	 }
+	 
+	 function animateBullets() {	
+		bulletArray.forEach(function (bullet) {			
+			bullet.posY=bullet.posY-5;
+		});
 	 }
 	 
 	 function clearScreen() {
@@ -64,6 +69,7 @@
 	 function redrawScreen() {
 		clearScreen();
 		drawPaddle();
+		animateBullets();
 		drawBullets();
 	 }
 	
