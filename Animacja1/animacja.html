@@ -32,13 +32,13 @@
 	  
 	  var targetRadiusMin = 20;
 	  var targetRadiusMax = 40;
-	  var targetColors = ["green", "blue", "red", "black"];
+	  var targetColors = ["green", "blue", "red", "black", "orange", "pink"];
 	  var targetPosYMin = 20;
 	  var targetPosYMax = 300;
 	  let targetArray = new Array();  
-	  var targetLimit = 30;
-	  var targetAppearDelay = 25;
-	  var targetAppearDelayLimit = 25;
+	  var targetLimit = 15;
+	  var targetAppearDelay = 250;
+	  var targetAppearDelayLimit = 250;
 	  
 	  var Keys = {
 		space: false,
@@ -148,6 +148,7 @@
 		populateTargets();
 		drawPaddle();
 		animateBullets();
+		checkCollisions();
 		drawBullets();
 		drawTargets();
 	 }
@@ -172,8 +173,41 @@
 		bulletArray.push(myObj);
 	 }
 	 
+	 function checkCollisions() {
+		let  bulletTempArray = new Array();	 
+		let  targetTempArray = new Array();	
+		bulletArray.forEach(function (bullet) {		
+			targetArray.forEach(function (target) {		
+				if(isCirclesNotCollide(bullet.posX,bullet.posY,bulletRadius,target.posX,target.posY,target.radius)) {
+					bulletTempArray.push(bullet);
+					targetTempArray.push(target);
+				}
+			});
+		bulletArray=bulletTempArray;
+		targetArray=targetTempArray;		
+	    });		
+	 }
+	 
+	 function isCirclesNotCollide(x1,y1,r1,x2,y2,r2) {
+		  var a;
+		  var x;
+		  var y;
+
+		  a = r1 + r2;
+		  x = p1x - p2x;
+		  y = p1y - p2y;
+
+		  if (a > Math.sqrt((x * x) + (y * y))) {
+			return false;
+		  } else {
+			return true;
+		  }
+	 }
+	 
 	 function addTarget() {
 		var myObj = new Object();
+		// check if not drawn on existing target
+		
 		myObj.posX = Math.floor(Math.random() * (800 - targetRadiusMax)) + targetRadiusMax,
 		myObj.posY = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin;
 		myObj.radius = Math.floor(Math.random() * (targetRadiusMax - targetRadiusMin)) + targetRadiusMin;
