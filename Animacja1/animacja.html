@@ -22,17 +22,38 @@
 	  var paddlePosY = 550;
 	  var paddleWidth = 100;
 	  var paddleHeight= 20;
+	  var paddleColor = "green"
+	  
+	  var bulletRadius = 10;
+	  var bulletArray = new Array();
+	  
 	  var targetRadius = 40;
+	  var targetColors = ["green", "blue", "red", "black"];
+	  var targetArray = new Array();  
 	  
 	  function drawPaddle() {	
 		context.beginPath();
 		context.rect(paddlePosX, paddlePosY, paddleWidth, paddleHeight);
 		context.stroke();
-		context.fillStyle = "green";
+		context.fillStyle = paddleColor;
 		context.fill();
 		context.lineWidth = 4;
 		context.strokeStyle = '#003300';
 		context.stroke();
+	 }
+	 
+	  function drawBullets() {	
+		for (var bullet in bulletArray) {
+			console.log(bullet.posX);
+			context.beginPath();
+			context.arc(bullet.posX, bullet.posY, bulletRadius, 0, 2 * Math.PI, false);
+			context.stroke();
+			context.fillStyle = "black";
+			context.fill();
+			context.lineWidth = 4;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		}
 	 }
 	 
 	 function clearScreen() {
@@ -42,10 +63,17 @@
 	 function redrawScreen() {
 		clearScreen();
 		drawPaddle();
+		drawBullets();
 	 }
+	
+	
 	 
-	 function  fireBullet() {
-	 
+	 function fireBullet() {
+		var myObj = new Object();
+		myObj.posX = paddlePosX+paddleWidth/2,
+		myObj.posY = paddlePosY-paddleHeight;
+			
+		bulletArray.push(myObj);
 	 }
 	 
 	document.addEventListener('keydown', function(event) {
