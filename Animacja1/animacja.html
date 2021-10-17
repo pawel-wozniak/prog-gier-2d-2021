@@ -37,8 +37,8 @@
 	  var targetPosYMax = 300;
 	  let targetArray = new Array();  
 	  var targetLimit = 15;
-	  var targetAppearDelay = 250;
-	  var targetAppearDelayLimit = 250;
+	  var targetAppearDelay = 25;
+	  var targetAppearDelayLimit = 25;
 	  
 	  var Keys = {
 		space: false,
@@ -150,7 +150,7 @@
 		animateBullets();
 		drawBullets();
 		drawTargets();
-		//checkCollisions();
+		checkCollisions();
 	 }
 	
 	function populateTargets() {
@@ -175,25 +175,24 @@
 	 
 	 function checkCollisions() {
 		let  targetTempArray = new Array();	
-		for (let i = 0; i < bulletArray.length; i++) { 
-			for (let j = 0; i < targetArray.length; j++) { 
-				if(true) {
-					targetTempArray.push(bulletArray[j]);
-					console.log("ads");
-				}
+		
+		targetArray.forEach(function (target) {			
+			if(true) {
+				targetTempArray.push(target);
 			}
-		}
+		});
+		
 		targetArray=targetTempArray;	
 	 }
 	 
-	 function isCirclesNotCollide(x1,y1,r1,x2,y2,r2) {
+	 function isCirclesCollide(x1,y1,r1,x2,y2,r2) {
 		  var a;
 		  var x;
 		  var y;
 
 		  a = r1 + r2;
-		  x = p1x - p2x;
-		  y = p1y - p2y;
+		  x = x1 - x2;
+		  y = y1 - y2;
 
 		  if (a > Math.sqrt((x * x) + (y * y))) {
 			return true;
@@ -206,9 +205,25 @@
 		var myObj = new Object();
 		// check if not drawn on existing target
 		
-		myObj.posX = Math.floor(Math.random() * (800 - targetRadiusMax)) + targetRadiusMax,
-		myObj.posY = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin;
-		myObj.radius = Math.floor(Math.random() * (targetRadiusMax - targetRadiusMin)) + targetRadiusMin;
+		var xc =0;
+		var yc =0;
+		var rc=0;
+		var gotTarget = false;
+		while (!gotTarget) {
+			gotTarget = true;
+			xc = Math.floor(Math.random() * (800 - targetRadiusMax*2)) + targetRadiusMax;
+			yc = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin;
+			rc = Math.floor(Math.random() * (targetRadiusMax - targetRadiusMin)) + targetRadiusMin;
+			if(targetArray.length>0) {
+				targetArray.forEach(target => {
+					if(isCirclesCollide(xc,yc,rc,target.posX,target.posY,target.radius)) gotTarget = false;			
+				});
+			} 
+		}
+		
+		myObj.posX = xc;
+		myObj.posY = yc;
+		myObj.radius = rc;
 		myObj.color = targetColors[Math.floor(Math.random() * targetColors.length)];
 			
 		targetArray.push(myObj);
