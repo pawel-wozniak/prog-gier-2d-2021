@@ -18,6 +18,36 @@
 	  var canvas = document.getElementById('canvas');
 	  var context = canvas.getContext('2d');
 	  
+	  var paddlePosX = 400;
+	  var paddlePosY = 550;
+	  var paddleWidth = 100;
+	  var paddleHeight= 20;
+	  var targetRadius = 40;
+	  
+	  function drawPaddle() {	
+		context.beginPath();
+		context.rect(paddlePosX, paddlePosY, paddleWidth, paddleHeight);
+		context.stroke();
+		context.fillStyle = "green";
+		context.fill();
+		context.lineWidth = 4;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	 }
+	 
+	 function clearScreen() {
+		context.clearRect( 0, 0 , 800, 600 );
+	 }
+	 
+	 function redrawScreen() {
+		clearScreen();
+		drawPaddle();
+	 }
+	  
+	
+	
+	var t1=setInterval(redrawScreen,20);
+	  
 
 	</script>
 </body>
