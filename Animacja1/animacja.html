@@ -30,9 +30,15 @@
 	  var bulletFireDelay = 5;
 	  var bulletFireDelayLimit = 5;
 	  
-	  var targetRadius = 40;
+	  var targetRadiusMin = 20;
+	  var targetRadiusMax = 40;
 	  var targetColors = ["green", "blue", "red", "black"];
-	  let  targetArray = new Array();  
+	  var targetPosYMin = 20;
+	  var targetPosYMax = 300;
+	  let targetArray = new Array();  
+	  var targetLimit = 30;
+	  var targetAppearDelay = 25;
+	  var targetAppearDelayLimit = 25;
 	  
 	  var Keys = {
 		space: false,
@@ -83,6 +89,20 @@
 		});
 	 }
 	 
+	 function drawTergets() {	
+		targetArray.forEach(function (target) {			
+			console.log(target.posX);
+			context.beginPath();
+			context.arc(target.posX, target.posY, target.radius, 0, 2 * Math.PI, false);
+			context.stroke();
+			context.fillStyle = target.color;
+			context.fill();
+			context.lineWidth = 4;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		});
+	 }
+	 
 	 function animateBullets() {
 		let  tempArray = new Array();	 
 		bulletArray.forEach(function (bullet) {			
@@ -125,11 +145,22 @@
 	 function redrawScreen() {
 		clearScreen();
 		keyboardCheck();
+		populateTargets();
 		drawPaddle();
 		animateBullets();
 		drawBullets();
+		drawTargets();
 	 }
 	
+	function populateTargets() {
+			if(targetAppearDelay == 0) {
+				addTarget();
+				targetAppearDelay = targetAppearDelayLimit;
+			}
+			else {
+				targetAppearDelay = targetAppearDelay - 1;
+			}
+	 }
 	 
 	 function fireBullet() {
 		var myObj = new Object();
@@ -138,7 +169,16 @@
 			
 		bulletArray.push(myObj);
 	 }
-	 	
+	 
+	 function addTarget() {
+		var myObj = new Object();
+		myObj.posX = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin,
+		myObj.posY = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin;
+		myObj.radius = Math.floor(Math.random() * (targetRadiusMax - targetRadiusMin)) + targetRadiusMin;
+		myObj.color = targetColors[Math.floor(Math.random() * targetColors.length)];
+			
+		targetArray.push(myObj);
+	 }
 	
 	setInterval(redrawScreen,20);
 	  
