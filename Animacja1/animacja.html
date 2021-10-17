@@ -148,9 +148,9 @@
 		populateTargets();
 		drawPaddle();
 		animateBullets();
-		checkCollisions();
 		drawBullets();
 		drawTargets();
+		//checkCollisions();
 	 }
 	
 	function populateTargets() {
@@ -174,18 +174,16 @@
 	 }
 	 
 	 function checkCollisions() {
-		let  bulletTempArray = new Array();	 
 		let  targetTempArray = new Array();	
-		bulletArray.forEach(function (bullet) {		
-			targetArray.forEach(function (target) {		
-				if(isCirclesNotCollide(bullet.posX,bullet.posY,bulletRadius,target.posX,target.posY,target.radius)) {
-					bulletTempArray.push(bullet);
-					targetTempArray.push(target);
+		for (let i = 0; i < bulletArray.length; i++) { 
+			for (let j = 0; i < targetArray.length; j++) { 
+				if(true) {
+					targetTempArray.push(bulletArray[j]);
+					console.log("ads");
 				}
-			});
-		bulletArray=bulletTempArray;
-		targetArray=targetTempArray;		
-	    });		
+			}
+		}
+		targetArray=targetTempArray;	
 	 }
 	 
 	 function isCirclesNotCollide(x1,y1,r1,x2,y2,r2) {
@@ -198,9 +196,9 @@
 		  y = p1y - p2y;
 
 		  if (a > Math.sqrt((x * x) + (y * y))) {
-			return false;
-		  } else {
 			return true;
+		  } else {
+			return false;
 		  }
 	 }
 	 
