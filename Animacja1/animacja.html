@@ -142,7 +142,7 @@
 		}
 	 }
 	 
-	 function redrawScreen() {
+	 function mainLoop() {
 		clearScreen();
 		keyboardCheck();
 		populateTargets();
@@ -176,9 +176,17 @@
 	 function checkCollisions() {
 		let  targetTempArray = new Array();	
 		
-		targetArray.forEach(function (target) {			
-			if(true) {
-				targetTempArray.push(target);
+		targetArray.forEach(function (target) {		
+			var collide = false;
+			let  bulletTempArray = new Array();	
+			bulletArray.forEach(function (bullet) {						
+				if(isCirclesCollide(bullet.posX,bullet.posY,bulletRadius,target.posX,target.posY,target.radius)) {
+					collide = true;
+				} else bulletTempArray.push(bullet);
+			});
+			bulletArray=bulletTempArray;
+			if(!collide) {
+					targetTempArray.push(target);
 			}
 		});
 		
@@ -186,13 +194,9 @@
 	 }
 	 
 	 function isCirclesCollide(x1,y1,r1,x2,y2,r2) {
-		  var a;
-		  var x;
-		  var y;
-
-		  a = r1 + r2;
-		  x = x1 - x2;
-		  y = y1 - y2;
+		  var a = r1 + r2;
+		  var x = x1 - x2;
+		  var y = y1 - y2;
 
 		  if (a > Math.sqrt((x * x) + (y * y))) {
 			return true;
@@ -203,7 +207,6 @@
 	 
 	 function addTarget() {
 		var myObj = new Object();
-		// check if not drawn on existing target
 		
 		var xc =0;
 		var yc =0;
@@ -229,7 +232,7 @@
 		targetArray.push(myObj);
 	 }
 	
-	setInterval(redrawScreen,20);
+	setInterval(mainLoop,20);
 	  
 
 	</script>
