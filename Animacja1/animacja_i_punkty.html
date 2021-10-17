@@ -228,7 +228,7 @@
 			bulletArray.forEach(bullet => {						
 				if(isCirclesCollide(bullet.posX,bullet.posY,bulletRadius,target.posX,target.posY,target.r)) {
 					collide = true;
-					points= points + targetRadiusMax - target.r;
+					points= points + 1;
 					textPoints = textPointsBase + points;
 				} else bulletTempArray.push(bullet);
 			});
