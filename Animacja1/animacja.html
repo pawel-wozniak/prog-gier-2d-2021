@@ -26,10 +26,37 @@
 	  
 	  var bulletRadius = 10;
 	  let  bulletArray = new Array();
+	  var bulletLimit = 30;
+	  var bulletFireDelay = 5;
+	  var bulletFireDelayLimit = 5;
 	  
 	  var targetRadius = 40;
 	  var targetColors = ["green", "blue", "red", "black"];
 	  let  targetArray = new Array();  
+	  
+	  var Keys = {
+		space: false,
+        left: false,
+        right: false
+      };
+
+	  
+		window.onkeyup = function(e) {
+			var kc = e.keyCode;
+			e.preventDefault();
+
+			if (kc === 37) Keys.right = false;
+			if (kc === 39) Keys.left = false;
+			if (kc === 32) Keys.space = false;
+		};
+		window.onkeydown = function(e) {
+			var kc = e.keyCode;
+			e.preventDefault();
+
+			if (kc === 37) Keys.right = true;  // only one key per event
+			if (kc === 39) Keys.left = true;
+			if (kc === 32) Keys.space = true;
+		};
 	  
 	  function drawPaddle() {	
 		context.beginPath();
@@ -59,8 +86,8 @@
 	 function animateBullets() {
 		let  tempArray = new Array();	 
 		bulletArray.forEach(function (bullet) {			
-			bullet.posY=bullet.posY-5;
-			if(bullet.posY>50) {
+			bullet.posY=bullet.posY-10;
+			if(bullet.posY>0) {
 				tempArray.push(bullet);
 			}
 		});
@@ -71,8 +98,33 @@
 		context.clearRect( 0, 0 , 800, 600 );
 	 }
 	 
+	 function keyboardCheck() {
+		if (Keys.left) {
+			paddlePosX+=5;
+		}
+		else if (Keys.right) {
+			paddlePosX-=5;
+}
+	  	if(paddlePosX <0) {
+			paddlePosX =0;
+		}
+		if(paddlePosX > 800-paddleWidth) {
+			paddlePosX = 800-paddleWidth;
+		}
+		if (Keys.space && bulletArray.length<bulletLimit) {
+			if(bulletFireDelay == 0) {
+				fireBullet();
+				bulletFireDelay = bulletFireDelayLimit;
+			}
+			else {
+				bulletFireDelay = bulletFireDelay - 1;
+			}
+		}
+	 }
+	 
 	 function redrawScreen() {
 		clearScreen();
+		keyboardCheck();
 		drawPaddle();
 		animateBullets();
 		drawBullets();
@@ -86,25 +138,7 @@
 			
 		bulletArray.push(myObj);
 	 }
-	 
-	document.addEventListener('keydown', function(event) {
-		if(event.keyCode == 37) {
-			paddlePosX -= 30;
-		}
-		else if(event.keyCode == 39) {
-			paddlePosX += 30;
-		}
-		else if(event.keyCode == 32) {
-			fireBullet();
-		}
-		if(paddlePosX <0) {
-			paddlePosX =0;
-		}
-		if(paddlePosX > 800-paddleWidth) {
-			paddlePosX = 800-paddleWidth;
-		}
-	});
-	
+	 	
 	
 	setInterval(redrawScreen,20);
 	  
