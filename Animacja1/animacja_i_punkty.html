@@ -20,6 +20,9 @@
 	  
 	  var screenSizeX = 800;
 	  var screenSizeY = 600;
+
+	  var points = 0;
+	  var time = 30;
  
 	  var paddlePosX = 400;
 	  var paddlePosY = 550;
@@ -40,13 +43,19 @@
 	  var targetRadiusMax = 40;
 	  var targetRediusIncr = 2;
 	  var targetColors = ["green", "blue", "red", "black", "orange", "pink"];
-	  var targetPosYMin = 40;
-	  var targetPosYMax = 300;
+	  var targetPosYMin = 100;
+	  var targetPosYMax = 400;
 	  let targetArray = new Array();  
 	  var targetLimit = 15;
 	  var targetAppearDelay = 25;
 	  var targetAppearDelayLimit = 25;
 	  
+	  var textStatus = "Test tst ts ts ssssss";
+	  var textPointsBase = "Points: ";
+	  var textTimeBase = "Time: ";
+	  var textPoints = "";
+	  var textTime = "";
+
 	  var Keys = {
 		space: false,
         left: false,
@@ -55,6 +64,9 @@
 
 	  function mainLoop() {
 		clearScreen();
+
+		if(time<0) {gameOver();}
+
 		keyboardCheck();
 		populateTargets();
 		animateBullets();
@@ -62,6 +74,8 @@
 		drawPaddle();
 		drawBullets();
 		drawTargets();
+		drawStatusBar();
+		drawStage();
 		
 		checkCollisions();
 	 }
@@ -113,7 +127,7 @@
 		let  tempArray = new Array();	 
 		bulletArray.forEach(bullet =>  {			
 			bullet.posY=bullet.posY-10;
-			if(bullet.posY>0) {
+			if(bullet.posY>40) {
 				tempArray.push(bullet);
 			}
 		});
@@ -214,6 +228,8 @@
 			bulletArray.forEach(bullet => {						
 				if(isCirclesCollide(bullet.posX,bullet.posY,bulletRadius,target.posX,target.posY,target.r)) {
 					collide = true;
+					points= points + targetRadiusMax - target.r;
+					textPoints = textPointsBase + points;
 				} else bulletTempArray.push(bullet);
 			});
 			bulletArray=bulletTempArray;
@@ -237,6 +253,33 @@
 			return false;
 		  }
 	 }
+
+	 function drawStatusBar() {
+		context.font = '24px serif';
+		context.fillStyle = "black";
+		var textSize = context.measureText(textStatus);
+		context.fillText(textStatus,screenSizeX/2 - (context.measureText(textStatus)).width/2, 24);
+		context.fillText(textPoints,screenSizeX-20- textSize.width, 24);
+		context.fillText(textTime, 20, 24);
+	}
+
+	 function drawStage() {
+		context.beginPath();
+		context.rect(0, 0, screenSizeX, 32);
+		context.rect(0, 0, screenSizeX, screenSizeY);
+		context.lineWidth = 3;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	}
+
+	function timeLoop() {
+		time= time - 1;
+		textTime = textTimeBase + time;
+	}
+
+	function gameOver() {
+
+	}
 		 
 	window.onkeyup = function(e) {
 		var kc = e.keyCode;
@@ -254,8 +297,10 @@
 		if (kc === 39) Keys.left = true;
 		if (kc === 32) Keys.space = true;
 	};
-	
+
+
 	setInterval(mainLoop,20);
+	setInterval(timeLoop,1000);
 	  
 	</script>
 </body>
