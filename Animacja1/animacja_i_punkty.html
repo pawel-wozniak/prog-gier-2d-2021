@@ -50,11 +50,11 @@
 	  var targetAppearDelay = 25;
 	  var targetAppearDelayLimit = 25;
 	  
-	  var textStatus = "Test tst ts ts ssssss";
+	  var textStatus = "WEEIAgalaga";
 	  var textPointsBase = "Points: ";
 	  var textTimeBase = "Time: ";
-	  var textPoints = "";
-	  var textTime = "";
+	  var textPoints = textPointsBase + points;
+	  var textTime = textTimeBase + time;
 
 	  var Keys = {
 		space: false,
@@ -64,8 +64,6 @@
 
 	  function mainLoop() {
 		clearScreen();
-
-		if(time<0) {gameOver();}
 
 		keyboardCheck();
 		populateTargets();
@@ -78,6 +76,8 @@
 		drawStage();
 		
 		checkCollisions();
+
+		if(time===0) {gameOver();}
 	 }
 	 	 
 	 function clearScreen() {
@@ -278,7 +278,27 @@
 	}
 
 	function gameOver() {
+		clearInterval(t1);
+		clearInterval(t2);
+		showResult();
+	}
 
+	function showResult() {
+	  context.fillStyle = "white";
+      context.fillRect(100,100, screenSizeX-200, screenSizeY-200);
+      context.font = "70pt sans-serif";
+	  var result = "Wynik: "+points;
+      context.strokeText(result, screenSizeX/2 - (context.measureText(result)).width/2, 300);
+	  context.font = "20pt sans-serif";
+	  context.fillStyle = "black";
+	  var text = "Press ENTER to try again";
+	  context.fillText(text, screenSizeX/2 - (context.measureText(text)).width/2, 400);
+	  context.stroke();
+	  window.onkeyup = function(e) {
+		var kc = e.keyCode;
+		e.preventDefault();
+		if (kc === 13) window.location.reload();
+	};
 	}
 		 
 	window.onkeyup = function(e) {
@@ -299,8 +319,8 @@
 	};
 
 
-	setInterval(mainLoop,20);
-	setInterval(timeLoop,1000);
+	var t1=setInterval(mainLoop,20);
+	var t2=setInterval(timeLoop,1000);
 	  
 	</script>
 </body>
