@@ -1,0 +1,329 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Animacja 2</title>
+  <meta name="description" content="Animacja 2">
+  <meta name="author" content="Pawel Wozniak, 224868">
+
+</head>
+
+<body>
+	<canvas id="canvas" width="800" height="600"></canvas>
+  
+	<script>
+	  var canvas = document.getElementById('canvas');
+	  var context = canvas.getContext('2d');
+	  
+	  var screenSizeX = 800;
+	  var screenSizeY = 600;
+
+	  var points = 0;
+	  var time = 30;
+ 
+	  var paddlePosX = 400;
+	  var paddlePosY = 550;
+	  var paddleWidth = 100;
+	  var paddleHeight= 20;
+	  var paddleColor = "green"
+	  var paddleMaxSpeed = 10;
+	  var paddleAccel = 0.5;
+	  var paddleSpeed = 0;
+	  
+	  var bulletRadius = 6;
+	  let bulletArray = new Array();
+	  var bulletLimit = 30;
+	  var bulletFireDelay = 5;
+	  var bulletFireDelayLimit = 5;
+	  
+	  var targetRadiusMin = 20;
+	  var targetRadiusMax = 40;
+	  var targetRediusIncr = 2;
+	  var targetColors = ["green", "blue", "red", "black", "orange", "pink"];
+	  var targetPosYMin = 100;
+	  var targetPosYMax = 400;
+	  let targetArray = new Array();  
+	  var targetLimit = 15;
+	  var targetAppearDelay = 25;
+	  var targetAppearDelayLimit = 25;
+	  
+	  var textStatus = "WEEIAgalaga";
+	  var textPointsBase = "Points: ";
+	  var textTimeBase = "Time: ";
+	  var textPoints = textPointsBase + points;
+	  var textTime = textTimeBase + time;
+
+	  var Keys = {
+		space: false,
+        left: false,
+        right: false
+      };
+
+	  function mainLoop() {
+		clearScreen();
+
+		keyboardCheck();
+		populateTargets();
+		animateBullets();
+
+		drawPaddle();
+		drawBullets();
+		drawTargets();
+		drawStatusBar();
+		drawStage();
+		
+		checkCollisions();
+
+		if(time===0) {gameOver();}
+	 }
+	 	 
+	 function clearScreen() {
+		context.clearRect( 0, 0 , screenSizeX, screenSizeY );
+	 }
+	  
+	  function drawPaddle() {	
+		context.beginPath();
+		context.rect(paddlePosX, paddlePosY, paddleWidth, paddleHeight);
+		context.stroke();
+		context.fillStyle = paddleColor;
+		context.fill();
+		context.lineWidth = 4;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	 }
+	 
+	  function drawBullets() {	
+		bulletArray.forEach(bullet =>  {			
+			console.log(bullet.posX);
+			context.beginPath();
+			context.arc(bullet.posX, bullet.posY, bulletRadius, 0, 2 * Math.PI, false);
+			context.stroke();
+			context.fillStyle = "black";
+			context.fill();
+			context.lineWidth = 4;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		});
+	 }
+	 
+	 function drawTargets() {	
+		targetArray.forEach(target =>  {			
+			if(target.radius>target.r) target.r = target.r + targetRediusIncr;
+			context.beginPath();
+			context.arc(target.posX, target.posY, target.r, 0, 2 * Math.PI, false);
+			context.stroke();
+			context.fillStyle = target.color;
+			context.fill();
+			context.lineWidth = 4;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		});
+	 }
+	 
+	 function animateBullets() {
+		let  tempArray = new Array();	 
+		bulletArray.forEach(bullet =>  {			
+			bullet.posY=bullet.posY-10;
+			if(bullet.posY>40) {
+				tempArray.push(bullet);
+			}
+		});
+		bulletArray=tempArray;
+	 }
+
+	 
+	 function keyboardCheck() {
+		if (Keys.left) {
+			paddleSpeed = paddleSpeed + paddleAccel;
+			if (paddleSpeed > paddleMaxSpeed) paddleSpeed = paddleMaxSpeed;
+		}
+		else if (Keys.right) {
+			paddleSpeed = paddleSpeed - paddleAccel;
+			if (paddleSpeed < -paddleMaxSpeed) paddleSpeed = -paddleMaxSpeed;
+		}
+		else if(paddleSpeed<0) {
+			paddleSpeed = paddleSpeed + paddleAccel;
+		}
+		else if(paddleSpeed>0) {
+			paddleSpeed = paddleSpeed - paddleAccel;
+		}
+
+		paddlePosX+=paddleSpeed;
+
+	  	if(paddlePosX <0) {
+			paddlePosX =0;
+		}
+		if(paddlePosX > screenSizeX-paddleWidth) {
+			paddlePosX = screenSizeX-paddleWidth;
+		}
+
+		if (Keys.space && bulletArray.length<bulletLimit) {
+			if(bulletFireDelay == 0) {
+				fireBullet();
+				bulletFireDelay = bulletFireDelayLimit;
+			}
+			else {
+				bulletFireDelay = bulletFireDelay - 1;
+			}
+		}
+	 }
+	
+	function populateTargets() {
+		if(targetLimit > targetArray.length) {
+			if(targetAppearDelay == 0) {
+				addTarget();
+				targetAppearDelay = targetAppearDelayLimit;
+			}
+			else {
+				targetAppearDelay = targetAppearDelay - 1;
+			}
+		}
+	 }
+
+	 function addTarget() {
+		var myObj = new Object();
+		var xc =0;
+		var yc =0;
+		var rc=0;
+		var gotTarget = false;
+
+		while (!gotTarget) {
+			gotTarget = true;
+			xc = Math.floor(Math.random() * (screenSizeX - targetRadiusMax*2)) + targetRadiusMax;
+			yc = Math.floor(Math.random() * (targetPosYMax - targetPosYMin)) + targetPosYMin;
+			rc = Math.floor(Math.random() * (targetRadiusMax - targetRadiusMin)) + targetRadiusMin;
+			if(targetArray.length>0) {
+				targetArray.forEach(target => {
+					if(isCirclesCollide(xc,yc,rc,target.posX,target.posY,target.radius)) gotTarget = false;			
+				});
+			} 
+		}
+		
+		myObj.posX = xc;
+		myObj.posY = yc;
+		myObj.radius = rc;
+		myObj.r = 0;
+		myObj.color = targetColors[Math.floor(Math.random() * targetColors.length)];
+			
+		targetArray.push(myObj);
+	 }
+	 
+	 function fireBullet() {
+		var myObj = new Object();
+		myObj.posX = paddlePosX+paddleWidth/2,
+		myObj.posY = paddlePosY-paddleHeight;
+			
+		bulletArray.push(myObj);
+	 }
+	 
+	 function checkCollisions() {
+		let  targetTempArray = new Array();	
+		
+		targetArray.forEach(target => {		
+			var collide = false;
+			let  bulletTempArray = new Array();	
+			bulletArray.forEach(bullet => {						
+				if(isCirclesCollide(bullet.posX,bullet.posY,bulletRadius,target.posX,target.posY,target.r)) {
+					collide = true;
+					points= points + 1;
+					textPoints = textPointsBase + points;
+				} else bulletTempArray.push(bullet);
+			});
+			bulletArray=bulletTempArray;
+			if(!collide) {
+					targetTempArray.push(target);
+			}
+		});
+		
+		targetArray=targetTempArray;	
+	 }
+
+	 	 
+	 function isCirclesCollide(x1,y1,r1,x2,y2,r2) {
+		  var a = r1 + r2;
+		  var x = x1 - x2;
+		  var y = y1 - y2;
+
+		  if (a > Math.sqrt((x * x) + (y * y))) {
+			return true;
+		  } else {
+			return false;
+		  }
+	 }
+
+	 function drawStatusBar() {
+		context.font = '24px serif';
+		context.fillStyle = "black";
+		var textSize = context.measureText(textStatus);
+		context.fillText(textStatus,screenSizeX/2 - (context.measureText(textStatus)).width/2, 24);
+		context.fillText(textPoints,screenSizeX-20- textSize.width, 24);
+		context.fillText(textTime, 20, 24);
+	}
+
+	 function drawStage() {
+		context.beginPath();
+		context.rect(0, 0, screenSizeX, 32);
+		context.rect(0, 0, screenSizeX, screenSizeY);
+		context.lineWidth = 3;
+		context.strokeStyle = '#003300';
+		context.stroke();
+	}
+
+	function timeLoop() {
+		time= time - 1;
+		textTime = textTimeBase + time;
+	}
+
+	function gameOver() {
+		clearInterval(t1);
+		clearInterval(t2);
+		showResult();
+	}
+
+	function showResult() {
+	  context.fillStyle = "white";
+      context.fillRect(100,100, screenSizeX-200, screenSizeY-200);
+      context.font = "70pt sans-serif";
+	  var result = "Wynik: "+points;
+      context.strokeText(result, screenSizeX/2 - (context.measureText(result)).width/2, 300);
+	  context.font = "20pt sans-serif";
+	  context.fillStyle = "black";
+	  var text = "Press ENTER to try again";
+	  context.fillText(text, screenSizeX/2 - (context.measureText(text)).width/2, 400);
+	  context.stroke();
+	  window.onkeyup = function(e) {
+		var kc = e.keyCode;
+		e.preventDefault();
+		if (kc === 13) window.location.reload();
+	};
+	}
+		 
+	window.onkeyup = function(e) {
+		var kc = e.keyCode;
+		e.preventDefault();
+
+		if (kc === 37) Keys.right = false;
+		if (kc === 39) Keys.left = false;
+		if (kc === 32) Keys.space = false;
+	};
+	window.onkeydown = function(e) {
+		var kc = e.keyCode;
+		e.preventDefault();
+
+		if (kc === 37) Keys.right = true; 
+		if (kc === 39) Keys.left = true;
+		if (kc === 32) Keys.space = true;
+	};
+
+
+	var t1=setInterval(mainLoop,20);
+	var t2=setInterval(timeLoop,1000);
+	  
+	</script>
+</body>
+
+</body>
+</html>
