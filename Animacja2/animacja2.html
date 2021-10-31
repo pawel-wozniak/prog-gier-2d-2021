@@ -17,7 +17,20 @@
 	<script>
 	  var canvas = document.getElementById('canvas');
 	  var context = canvas.getContext('2d');
-	  
+
+	  class Point {
+		  constructor(x, y) {
+			this.x = x;
+			this.y = y;
+		  }
+	  }
+	  class Vector {
+		  constructor(vx, vy) {
+			this.vx = vx;
+			this.vy = vy;
+		  }
+	  }
+
 	  var screenSizeX = 800;
 	  var screenSizeY = 600;
 	  var screenCenter = new Point(screenSizeX/2, screenSizeY/2);
@@ -44,52 +57,6 @@
         down: false
       };
 
-	  class Point {
-		  constructor(x, y) {
-			this.x = x;
-			this.y = y;
-		  }
-	  }
-	  class Vector {
-		  constructor(vx, vy) {
-			this.vx = vx;
-			this.vy = vy;
-		  }
-	  }
-
-	  class World {
-		 objects = new Array(); 
-		 angle = 0;
-		 zoom = worldZoom;
-
-		 draw() {
-			objects.forEach(obj =>  {
-				obj.draw();
-			});
-		 }
-
-		 update() {
-			objects.forEach(obj =>  {
-				obj.update();
-			});
-		 }
-
-		 clean() {
-			tempObjects = new Array(); 
-			objects.forEach(obj =>  {
-				distance = Math.hypot(obj.point.x - screenCenter.x, obj.point.y - screenCenter.y);
-				if (worldRadius < Math.abs(distance)) {
-					tempObjects.add(obj);
-				}
-			});
-			objects = tempObjects;
-		 }
-	  }
-
-	  class Road {
-
-	  }
-
 	  class GameObject {
 		  constructor(point, vector, angle) {
 			  this.point = point;
@@ -102,6 +69,10 @@
 			context.points(this.point.x, this.point.y);
 			context.strokeStyle = '#003300';
 			context.stroke();
+		  }
+
+		  update() {
+			  this.draw();
 		  }
 	  }
 
@@ -149,15 +120,59 @@
 
 	  }
 
+	  class Road {
+
+		}
+
+	  class World {
+		 constructor() {
+			 this.car = new Car(new Point(50,50), new Vector(0,0), 15);
+			 this.gameObjects = new Array(); 
+			 this.gameObjects.push(this.car);
+			 this.angle = 0;
+		 	 this.zoom = worldZoom;
+		 }
+
+		 draw() {
+			this.gameObjects.forEach(obj =>  {
+				if(isVisible(obj.point)) {
+					obj.draw();
+				}
+			});
+		 }
+
+		 update() {
+			this.gameObjects.forEach(obj =>  {
+				obj.update();
+			});
+			this.tidy();
+			this.draw();
+		 }
+
+		 tidy() {
+			let tempObjects = new Array(); 
+			this.gameObjects.forEach(obj =>  {
+				if (worldRadius >= absDistance(obj.point , screenCenter)) {
+					tempObjects.push(obj);
+				}
+			});
+			this.gameObjects = tempObjects;
+		 }
+	  }
+
+	  class Game {
+		  constructor() {
+			  this.world = new World();
+		  }
+	  }
 
 	  function mainLoop() {
 		clearScreen();
-
+		
 		drawStatusBar();
 		drawStage();
 
-		let car1 = new Car(new Point(50,50), new Vector(0,0), 90);
-		car1.draw();
+		game.world.update();
 
 		if(time===0) {gameOver();}
 	 }
@@ -175,6 +190,18 @@
 		point.y = (tempPoint.x * s + tempPoint.y * c) + center.y;
 
 		return new Point(point.x, point.y); 
+	 }
+
+	 function absDistance(p1,p2) {
+		 return Math.abs(Math.hypot(p1.x - p2.x, p1.y - p2.y));
+	 }
+
+	 function isVisible(p) {
+		 if(p.x>0 && p.x < screenSizeX && p.y>0 && p.y<screenSizeY) {
+			 return true;
+		 }
+		 
+		return false;
 	 }
 
 	 function drawStatusBar() {
@@ -253,7 +280,7 @@
 		if (kc === 32) Keys.space = true;
 	};
 
-
+	let game = new Game();
 	var t1=setInterval(mainLoop,20);
 	var t2=setInterval(timeLoop,1000);
 	  
