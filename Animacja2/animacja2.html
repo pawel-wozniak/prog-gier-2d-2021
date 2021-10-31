@@ -147,30 +147,34 @@
 		  }
 
 		  accelerate() {
-			  this.vector.setLength(this.vector.length() + 0.1);
-			  if(this.vector.length() > carMaxAccelerate) { 
-				  this.vector.setLength(carMaxAccelerate); 
+			  var newLength = this.vector.length() + 0.1;
+			  if(newLength > carMaxAccelerate) { 
+				newLength = carMaxAccelerate; 
 			  }
-			  this.vector.rotateTo(this.angle+90); 
+			  this.vector = new Vector(1,1);
+			  this.vector.rotateTo(this.angle+90);
+			  this.vector.setLength(newLength);
 		  }
 
 		  decelerate() {
-			  this.vector.setLength(this.vector.length() - 0.1);
-			  if(this.vector.length() < 0) { 
-				  this.vector.setLength(0); 
+			var newLength = this.vector.length() - 0.1;
+			  if(newLength < 0) { 
+				newLength = 0; 
 			  }
-			  this.vector.rotateTo(this.angle+90); 
+			  this.vector = new Vector(1,1);
+			  this.vector.rotateTo(this.angle+90);
+			  this.vector.setLength(newLength);
 		  }
 
 		  rotateLeft() {
-			this.angle = this.angle -5;
+			this.angle = this.angle + 5;
 			if (this.angle > 360) {this.angle = this.angle - 360;}
 			if (this.angle <0) {this.angle = 360 + this.angle; }
 			this.vector.rotateTo(this.angle+90);
 		  }
 
 		  rotateRight() {
-			this.angle = this.angle +5;
+			this.angle = this.angle - 5;
 			if (this.angle > 360) {this.angle = this.angle - 360;}
 			if (this.angle <0) {this.angle = 360 + this.angle; }
 			this.vector.rotateTo(this.angle+90);
@@ -201,7 +205,7 @@
 
 	  class World {
 		 constructor() {
-			 this.car = new Car(new Point(50,50), new Vector(0.05,0), 0, "car");
+			 this.car = new Car(new Point(screenCenter.x,screenCenter.y+100), new Vector(0,0), 0, "car");
 			 this.gameObjects = new Array(); 
 			 this.angle = 0;
 		 	 this.zoom = worldZoom;
