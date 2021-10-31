@@ -96,7 +96,7 @@
 
 
 	  var points = 0;
-	  var time = 6;
+	  var time = 60;
 	  
 	  var textStatus = "WEEIArace";
 	  var textPointsBase = "Points: ";
@@ -164,7 +164,6 @@
 			context.lineTo(vert3.x, vert3.y);
 			context.lineTo(vert4.x, vert4.y);
 			context.closePath();
-			context.stroke();
 			context.fillStyle = "blue";
 			context.fill();
 			context.lineWidth = 2;
@@ -234,10 +233,10 @@
 	  class Bonus extends GameObject {
 		draw() {
 			context.beginPath();
-			context.rect(this.point.x-5, this.point.y-5, 10, 10);
+			context.rect(this.point.x-15, this.point.y-15, 30, 30);
 			context.fillStyle = "gold";
 			context.fill();
-			context.lineWidth = 2;
+			context.lineWidth = 3;
 			context.strokeStyle = '#003300';
 			context.stroke();
 		  }
@@ -292,15 +291,16 @@
 			old = null;
 			this.center.forEach(obj =>  {
 				if(isVisible(obj.point) && old != null) {
-					context.beginPath();
-					context.moveTo(old.point.x , old.point.y);
-					context.lineTo(obj.point.x, obj.point.y);
-					context.closePath();
-					context.lineWidth = 14;
 					if(obj.type == 'roadCenterLine') {
+						context.beginPath();
+						context.moveTo(old.point.x , old.point.y);
+						context.lineTo(obj.point.x, obj.point.y);
+						context.closePath();
+						context.lineWidth = 14;
+
 						context.strokeStyle = 'gray';
-						context.stroke();
-					} else {context.restore();		}							
+						context.stroke();	
+					}					
 				} 
 				old = obj;
 			});
@@ -398,13 +398,6 @@
 			}
 			if(this.angle<0) {
 				this.direct = 1;
-			}
-			this.width = this.width + getRandomInt(-30,30) * (Math.random() > 0.95);
-			if(this.width> roadMaxWidth) {
-				this.width = roadMaxWidth;
-			}
-			if(this.width < roadMinWidth) {
-				this.width = roadMinWidth;
 			}
 
 		}
@@ -512,11 +505,11 @@
 
 	  function mainLoop() {
 		clearScreen();
-		
-		drawStage();
+		drawBackground();
 
 		game.world.update();
 
+		drawStage();
 		drawStatusBar();
 
 		// if(time===0) {gameOver();}
@@ -554,21 +547,29 @@
 	 function drawStage() {
 		context.beginPath();
 		context.rect(0, 0, screenSizeX, 32);
+		context.closePath();
+		context.fillStyle = "white";
+		context.fill();
+		context.stroke;
 
+		context.beginPath();
 		context.rect(0, 0, screenSizeX, screenSizeY);
+		context.closePath();
 		context.lineWidth = 3;
 		context.strokeStyle = '#003300';
 		context.stroke();
 
+		context.font = "70pt sans-serif";
+        context.strokeText(textBanner, screenSizeX/2 - (context.measureText(textBanner)).width/2, 300);	
+	}
+
+	function drawBackground() {
 		context.beginPath();
 		context.fillStyle = "lightgreen";
 		context.fillRect(3, 34, screenSizeX-6, screenSizeY-3-34);
 		context.lineWidth = 1;
 		context.strokeStyle = '#003300';
 		context.stroke();
-
-		context.font = "70pt sans-serif";
-        context.strokeText(textBanner, screenSizeX/2 - (context.measureText(textBanner)).width/2, 300);	
 	}
 
 	function timeLoop() {
@@ -579,12 +580,13 @@
 	function gameOver() {
 		clearInterval(t1);
 		clearInterval(t2);
-		showResult();
+		setTimeout(function(){ showResult(); }, 100);
 	}
 
 	function showResult() {
 	  context.fillStyle = "white";
       context.fillRect(100,100, screenSizeX-200, screenSizeY-200);
+	  context.stroke();
       context.font = "70pt sans-serif";
 	  var result = "Wynik: "+points;
       context.strokeText(result, screenSizeX/2 - (context.measureText(result)).width/2, 300);
@@ -631,12 +633,28 @@
 		setTimeout(function(){ textBanner = ""; bonusFlag = true; obstacleFlag = true; }, 3000);	
 	} 
 
+	function increaseDifficulty() {
+		carMaxAccelerate = carMaxAccelerate + 0.5;
+		let vectorOld = game.world.car.vector;
+		vectorOld.setLength(carMaxAccelerate);
+		game.world.car.vector = vectorOld;
+
+		game.world.road.width = game.world.road.width - 5;
+			if(this.width> roadMaxWidth) {
+				this.width = roadMaxWidth;
+			}
+			if(this.width < roadMinWidth) {
+				this.width = roadMinWidth;
+			}
+	}
+
 	let game = new Game();
 	var t1=setInterval(mainLoop,20);
 	var t2=setInterval(timeLoop,1000);
 	game.world.car.vector = new Vector(0,-carMaxAccelerate);
 	intro();
 	var t3=setInterval(keys,3000);
+	var t4 =setInterval(increaseDifficulty, 5000);
 
 	  
 	</script>
