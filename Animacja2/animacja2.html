@@ -21,8 +21,11 @@
 	  var screenSizeX = 800;
 	  var screenSizeY = 600;
 
+	  var carSizeX = 10;
+	  var carSizeY = 15;
+
 	  var points = 0;
-	  var time = 60;
+	  var time = 6;
 	  
 	  var textStatus = "WEEIArace";
 	  var textPointsBase = "Points: ";
@@ -38,13 +41,107 @@
         down: false
       };
 
+	  class Point {
+		  constructor(x, y) {
+			this.x = x;
+			this.y = y;
+		  }
+	  }
+	  class Vector {
+		  constructor(vx, vy) {
+			this.vx = vx;
+			this.vy = vy;
+		  }
+	  }
+
+	  class World {
+		 objects = new Array(); 
+
+		 draw() {
+			objects.forEach(obj =>  {
+				obj.draw();
+			});
+		 }
+
+		 update() {
+			objects.forEach(obj =>  {
+				obj.update();
+			});
+		 }
+	  }
+
+	  class Road {
+
+	  }
+
+	  class GameObject {
+		  constructor(point, vector, angle) {
+			  this.point = point;
+			  this.vector = vector;
+			  this.angle = angle;
+		  }
+
+		  draw() {
+			context.beginPath();
+			context.points(this.point.x, this.point.y);
+			context.strokeStyle = '#003300';
+			context.stroke();
+		  }
+	  }
+
+	  class Car extends GameObject {
+		  draw() {
+			var vert1 = new Point(this.point.x-carSizeX, this.point.y+carSizeY);
+			var vert2 = new Point(this.point.x+carSizeX, this.point.y+carSizeY);
+			var vert3 = new Point(this.point.x+carSizeX, this.point.y-carSizeY);
+			var vert4 = new Point(this.point.x-carSizeX, this.point.y-carSizeY);
+
+			vert1 = rotatePoint(vert1, this.point, this.angle);
+			vert2 = rotatePoint(vert2, this.point, this.angle);
+			vert3 = rotatePoint(vert3, this.point, this.angle);
+			vert4 = rotatePoint(vert4, this.point, this.angle);
+
+			context.beginPath();
+			context.moveTo(vert1.x, vert1.y);
+			context.lineTo(vert2.x, vert2.y);
+			context.lineTo(vert3.x, vert3.y);
+			context.lineTo(vert4.x, vert4.y);
+			context.closePath();
+			context.stroke();
+			context.fillStyle = "blue";
+			context.fill();
+			context.lineWidth = 2;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		  }
+	  }
+
+	  class Obstacle extends GameObject {
+		draw() {
+			context.beginPath();
+			context.rect(this.x-5, this.y+7, this.x+5, this.y-7);
+			context.stroke();
+			context.fillStyle = "blue";
+			context.fill();
+			context.lineWidth = 2;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		  }
+	  }
+
+	  class Bonus extends GameObject {
+
+	  }
+
+
 	  function mainLoop() {
 		clearScreen();
 
 		drawStatusBar();
 		drawStage();
-		
-		checkCollisions();
+
+		let car1 = new Car(new Point(50,50), new Vector(0,0), 90);
+		car1.draw();
 
 		if(time===0) {gameOver();}
 	 }
@@ -53,6 +150,16 @@
 		context.clearRect( 0, 0 , screenSizeX, screenSizeY );
 	 }
 	  
+	 function rotatePoint(point, center, angle) {
+		var s = Math.sin(Math.PI * angle/180);
+  		var c = Math.cos(Math.PI * angle/180);
+
+		tempPoint = new Point(point.x - center.x , point.y - center.y);
+		point.x = (tempPoint.x * c - tempPoint.y * s) + center.x;
+		point.y = (tempPoint.x * s + tempPoint.y * c) + center.y;
+
+		return new Point(point.x, point.y); 
+	 }
 
 	 function drawStatusBar() {
 		context.font = '24px serif';
@@ -66,8 +173,16 @@
 	 function drawStage() {
 		context.beginPath();
 		context.rect(0, 0, screenSizeX, 32);
+
 		context.rect(0, 0, screenSizeX, screenSizeY);
 		context.lineWidth = 3;
+		context.strokeStyle = '#003300';
+		context.stroke();
+
+		context.beginPath();
+		context.fillStyle = "lightgreen";
+		context.fillRect(3, 34, screenSizeX-6, screenSizeY-3-34);
+		context.lineWidth = 1;
 		context.strokeStyle = '#003300';
 		context.stroke();
 	}
