@@ -166,9 +166,10 @@
 			  if(newLength > carMaxAccelerate) { 
 				newLength = carMaxAccelerate; 
 			  }
-			  this.vector = new Vector(10,0);
-			  this.vector.rotateTo(this.angle+90);
-			  this.vector.setLength(newLength);
+			  let fakeVektor = new Vector(10,0);
+			  fakeVektor.rotateTo(this.angle+90);
+			  fakeVektor.setLength(newLength);
+			  this.vector = fakeVektor;
 		  }
 
 		  decelerate() {
@@ -176,9 +177,10 @@
 			  if(newLength < 0) { 
 				newLength = 0; 
 			  }
-			  this.vector = new Vector(10,0);
-			  this.vector.rotateTo(this.angle+90);
-			  this.vector.setLength(newLength);
+			  let fakeVektor = new Vector(10,0);
+			  fakeVektor.rotateTo(this.angle+90);
+			  fakeVektor.setLength(newLength);
+			  this.vector = fakeVektor;
 		  }
 
 		  rotateLeft() {
