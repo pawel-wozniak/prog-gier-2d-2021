@@ -23,12 +23,48 @@
 			this.x = x;
 			this.y = y;
 		  }
-	  }
+
+		 rotatePoint(center, angle) {
+			var s = Math.sin(Math.PI * angle/180);
+			var c = Math.cos(Math.PI * angle/180);
+
+			let tempPoint = new Point(this.x - center.x , this.y - center.y);
+			this.x = (tempPoint.x * c - tempPoint.y * s) + center.x;
+			this.y = (tempPoint.x * s + tempPoint.y * c) + center.y; 
+	 	}
+
+	 	absDistance(p) {
+		    return Math.abs(Math.hypot(this.x - p.x, this.y - p.y));
+	 	}
+	}
 	  class Vector {
-		  constructor(vx, vy) {
+		constructor(vx, vy) {
 			this.vx = vx;
 			this.vy = vy;
 		  }
+
+		length() {
+			return Math.abs(Math.sqrt(this.vx * this.vx + this.vy * this.vy));
+	 	}		
+
+	 	normalized() {
+		    return new Vector(this.vx/this.length() , this.vy/this.length());
+	 	}
+		
+		setLength(value) {
+			this.vx = this.normalized().vx * value;
+			this.vy = this.normalized().vy * value;
+		}
+
+		rotateTo(angle) {
+			var s = Math.sin(Math.PI * angle/180);
+			var c = Math.cos(Math.PI * angle/180);
+
+			var vecLength = this.length();
+
+			this.vx = vecLength * c;
+			this.vy = vecLength * s; 			
+		}
 	  }
 
 	  var screenSizeX = 800;
@@ -39,6 +75,7 @@
 
 	  var carSizeX = 10;
 	  var carSizeY = 15;
+	  var carMaxAccelerate = 3;
 
 	  var points = 0;
 	  var time = 6;
@@ -58,10 +95,11 @@
       };
 
 	  class GameObject {
-		  constructor(point, vector, angle) {
+		  constructor(point, vector, angle, type) {
 			  this.point = point;
 			  this.vector = vector;
 			  this.angle = angle;
+			  this.type = type;
 		  }
 
 		  draw() {
@@ -72,21 +110,27 @@
 		  }
 
 		  update() {
+			  this.move();
 			  this.draw();
+		  }
+
+		  move() {
+			  this.point.x = this.point.x + this.vector.vx;
+			  this.point.y = this.point.y + this.vector.vy;
 		  }
 	  }
 
 	  class Car extends GameObject {
 		  draw() {
-			var vert1 = new Point(this.point.x-carSizeX, this.point.y+carSizeY);
-			var vert2 = new Point(this.point.x+carSizeX, this.point.y+carSizeY);
-			var vert3 = new Point(this.point.x+carSizeX, this.point.y-carSizeY);
-			var vert4 = new Point(this.point.x-carSizeX, this.point.y-carSizeY);
+			var vert1 = new Point(this.point.x-carSizeX, this.point.y-carSizeY);
+			var vert2 = new Point(this.point.x-carSizeX, this.point.y+carSizeY);
+			var vert3 = new Point(this.point.x+carSizeX, this.point.y+carSizeY);
+			var vert4 = new Point(this.point.x+carSizeX, this.point.y-carSizeY);
 
-			vert1 = rotatePoint(vert1, this.point, this.angle);
-			vert2 = rotatePoint(vert2, this.point, this.angle);
-			vert3 = rotatePoint(vert3, this.point, this.angle);
-			vert4 = rotatePoint(vert4, this.point, this.angle);
+			vert1.rotatePoint(this.point, this.angle);
+			vert2.rotatePoint(this.point, this.angle);
+			vert3.rotatePoint(this.point, this.angle);
+			vert4.rotatePoint(this.point, this.angle);
 
 			context.beginPath();
 			context.moveTo(vert1.x, vert1.y);
@@ -101,6 +145,37 @@
 			context.strokeStyle = '#003300';
 			context.stroke();
 		  }
+
+		  accelerate() {
+			  this.vector.setLength(this.vector.length() + 0.1);
+			  if(this.vector.length() > carMaxAccelerate) { 
+				  this.vector.setLength(carMaxAccelerate); 
+			  }
+			  this.vector.rotateTo(this.angle+90); 
+		  }
+
+		  decelerate() {
+			  this.vector.setLength(this.vector.length() - 0.1);
+			  if(this.vector.length() < 0) { 
+				  this.vector.setLength(0); 
+			  }
+			  this.vector.rotateTo(this.angle+90); 
+		  }
+
+		  rotateLeft() {
+			this.angle = this.angle -5;
+			if (this.angle > 360) {this.angle = this.angle - 360;}
+			if (this.angle <0) {this.angle = 360 + this.angle; }
+			this.vector.rotateTo(this.angle+90);
+		  }
+
+		  rotateRight() {
+			this.angle = this.angle +5;
+			if (this.angle > 360) {this.angle = this.angle - 360;}
+			if (this.angle <0) {this.angle = 360 + this.angle; }
+			this.vector.rotateTo(this.angle+90);
+		  }
+		  
 	  }
 
 	  class Obstacle extends GameObject {
@@ -122,13 +197,12 @@
 
 	  class Road {
 
-		}
+	  }
 
 	  class World {
 		 constructor() {
-			 this.car = new Car(new Point(50,50), new Vector(0,0), 15);
+			 this.car = new Car(new Point(50,50), new Vector(0.05,0), 0, "car");
 			 this.gameObjects = new Array(); 
-			 this.gameObjects.push(this.car);
 			 this.angle = 0;
 		 	 this.zoom = worldZoom;
 		 }
@@ -147,17 +221,38 @@
 			});
 			this.tidy();
 			this.draw();
+			this.checkKeys();
+			this.checkCollision();
+			this.car.update();
 		 }
 
 		 tidy() {
 			let tempObjects = new Array(); 
 			this.gameObjects.forEach(obj =>  {
-				if (worldRadius >= absDistance(obj.point , screenCenter)) {
+				if (worldRadius >= obj.point.absDistance(screenCenter)) {
 					tempObjects.push(obj);
 				}
 			});
 			this.gameObjects = tempObjects;
 		 }
+
+		 checkCollision() {
+			this.gameObjects.forEach(obj =>  {
+				if (10 >= obj.point.absDistance(this.car.point)) {
+					tempObjects.push(obj);
+				} else {
+					// check type of object and act accordingly
+				}
+			});
+		 }
+
+		 checkKeys() {
+			if(Keys.left) {this.car.rotateLeft()}
+			if(Keys.right) {this.car.rotateRight()}
+			if(Keys.up) {this.car.accelerate();}
+			if(Keys.down) {this.car.decelerate();}
+		 }
+
 	  }
 
 	  class Game {
@@ -174,33 +269,18 @@
 
 		game.world.update();
 
-		if(time===0) {gameOver();}
+		// if(time===0) {gameOver();}
 	 }
 	 	 
 	 function clearScreen() {
 		context.clearRect( 0, 0 , screenSizeX, screenSizeY );
 	 }
-	  
-	 function rotatePoint(point, center, angle) {
-		var s = Math.sin(Math.PI * angle/180);
-  		var c = Math.cos(Math.PI * angle/180);
-
-		tempPoint = new Point(point.x - center.x , point.y - center.y);
-		point.x = (tempPoint.x * c - tempPoint.y * s) + center.x;
-		point.y = (tempPoint.x * s + tempPoint.y * c) + center.y;
-
-		return new Point(point.x, point.y); 
-	 }
-
-	 function absDistance(p1,p2) {
-		 return Math.abs(Math.hypot(p1.x - p2.x, p1.y - p2.y));
-	 }
+	
 
 	 function isVisible(p) {
 		 if(p.x>0 && p.x < screenSizeX && p.y>0 && p.y<screenSizeY) {
 			 return true;
-		 }
-		 
+		 }		 
 		return false;
 	 }
 
