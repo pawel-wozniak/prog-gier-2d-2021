@@ -48,12 +48,17 @@
 	 	}		
 
 	 	getNormalized() {
+			 if(this.length() == 0 ) {
+				 return new Vector (0,0);
+			 }
 		    return new Vector(this.vx/this.length() , this.vy/this.length());
 	 	}
 		
 		setLength(value) {
-			this.vx = this.getNormalized().vx * value;
-			this.vy = this.getNormalized().vy * value;
+			var newVX = this.getNormalized().vx * value;
+			var newVY = this.getNormalized().vy * value;
+			this.vx = newVX ;
+			this.vy = newVY;
 		}
 
 		rotateTo(angle) {
@@ -78,12 +83,13 @@
 	  var worldZoom = 1;
 	  var worldRadius = Math.sqrt(screenCenter.x * screenCenter.x + screenCenter.y * screenCenter.y) * 2;
 
-	  var carSizeX = 10;
-	  var carSizeY = 15;
+	  var carSizeX = 25;
+	  var carSizeY = 35;
+	  var carCollisionCircleRadius = 25;
 	  var carCenter = new Point(screenSizeX/2, screenSizeY/2+100);
 	  var carMaxAccelerate = 6;
 
-	  var roadMaxWidth = 400;
+	  var roadMaxWidth = 300;
 	  var roadMinWidth = 200;
 	  var roadMaxAngle = 0;
 	  var roadMinAngle = 180;
@@ -97,6 +103,10 @@
 	  var textTimeBase = "Time: ";
 	  var textPoints = textPointsBase + points;
 	  var textTime = textTimeBase + time;
+	  var textBanner ="";
+
+	  var bonusFlag = false; 
+	  var obstacleFlag = false; 
 
 	  var Keys = {
 		space: false,
@@ -166,7 +176,7 @@
 			  if(newLength > carMaxAccelerate) { 
 				newLength = carMaxAccelerate; 
 			  }
-			  let fakeVektor = new Vector(10,0);
+			  let fakeVektor = new Vector(1,1);
 			  fakeVektor.rotateTo(this.angle+90);
 			  fakeVektor.setLength(newLength);
 			  this.vector = fakeVektor;
@@ -177,33 +187,42 @@
 			  if(newLength < 0) { 
 				newLength = 0; 
 			  }
-			  let fakeVektor = new Vector(10,0);
+			  let fakeVektor = new Vector(1,1);
 			  fakeVektor.rotateTo(this.angle+90);
 			  fakeVektor.setLength(newLength);
 			  this.vector = fakeVektor;
 		  }
 
 		  rotateLeft() {
-			this.angle = this.angle + 5;
+			this.angle = this.angle + this.vector.length()/3;
 			if (this.angle > 360) {this.angle = this.angle - 360;}
 			if (this.angle <0) {this.angle = 360 + this.angle; }
 			this.vector.rotateTo(this.angle+90);
 		  }
 
 		  rotateRight() {
-			this.angle = this.angle - 5;
+			this.angle = this.angle - this.vector.length()/3;
 			if (this.angle > 360) {this.angle = this.angle - 360;}
 			if (this.angle <0) {this.angle = 360 + this.angle; }
 			this.vector.rotateTo(this.angle+90);
 		  }
 		  
+		  isColliding(point) {
+			if (point.x >= this.point.x-carSizeX &&         
+				point.x <= this.point.x+carSizeX &&    
+				point.y >= this.point.y-carSizeY &&       
+				point.y <= this.point.y+carSizeY) {   
+        		return true;
+			}
+			return false;
+		  }
 	  }
 
 	  class Obstacle extends GameObject {
 		draw() {
 			context.beginPath();
-			context.rect(this.point.x-1, this.point.y+1, 3, 3);
-			context.fillStyle = "red";
+			context.rect(this.point.x-5, this.point.y-5, 10, 10);
+			context.fillStyle = "gray";
 			context.fill();
 			context.lineWidth = 2;
 			context.strokeStyle = '#003300';
@@ -212,7 +231,15 @@
 	  }
 
 	  class Bonus extends GameObject {
-
+		draw() {
+			context.beginPath();
+			context.rect(this.point.x-5, this.point.y-5, 10, 10);
+			context.fillStyle = "gold";
+			context.fill();
+			context.lineWidth = 2;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		  }
 	  }
 
 	  class Road {
@@ -220,10 +247,12 @@
 			this.center  = new Array();
 			this.left = new Array();
 			this.right = new Array();
-			this.last = new GameObject(new Point(0, 0), new Vector(0,0), 0 , "last");
 			this.emiter = new Point(screenCenter.x, screenCenter.y-worldRadius+400);
+			this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "last");
+			this.emiterv = new Vector(30,0);
 			this.width = roadMaxWidth;
 			this.angle = 90;
+			this.direct = 1;
 		}
 
 		draw() {
@@ -270,21 +299,7 @@
 			this.center = tempObjects;
 		 }
 
-		emit() {			
-			if(this.last.point.absDistance(this.emiter) > 30) {
-				this.last = this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "last");
-				this.center.push(new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "roadCenter"));
-				
-				let fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
-				fakePoint.rotatePoint(this.emiter, this.angle+90);
-				this.left.push(new GameObject(fakePoint, new Vector(0,0), 0 , "roadLeft"));
-				
-				fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
-				fakePoint.rotatePoint(this.emiter, this.angle-90);
-				this.right.push(new GameObject(fakePoint, new Vector(0,0), 0 , "roadRight"));
-			}
-		}
-		update() {
+		 update() {
 			this.left.forEach(obj =>  {
 				obj.vector = game.world.car.vector.getNegate();
 				obj.update();
@@ -297,20 +312,87 @@
 				obj.vector = game.world.car.vector.getNegate();
 				obj.update();
 			});
-			this.last.vector = game.world.car.vector.getNegate();
-			this.last.update();
 			this.moveEmiter();
+			this.checkCollision();
+		}
+
+		emit() {
+				if(bonusFlag) {this.generateBonus();}
+				if(obstacleFlag) {this.generateObstacle();}
+				this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "last");			
+				this.center.push(new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "roadCenter"));
+				
+				let fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
+				fakePoint.rotatePoint(this.emiter, this.angle+90);
+				this.left.push(new GameObject(fakePoint, new Vector(0,0), 0 , "roadLeft"));
+				
+				fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
+				fakePoint.rotatePoint(this.emiter, this.angle-90);
+				this.right.push(new GameObject(fakePoint, new Vector(0,0), 0 , "roadRight"));
 		}
 
 		moveEmiter() {
-			this.angle = this.angle + 0.04;
-			if(this.angle>180) {this.angle = 180;}
-			let fakeEmiter = new Point(screenCenter.x-worldRadius+400, screenCenter.y);
-			fakeEmiter.rotatePoint(screenCenter, this.angle);
-			this.emiter = fakeEmiter;
+			this.emiter.x = this.emiter.x + game.world.car.vector.getNegate().vx;
+			this.emiter.y = this.emiter.y + game.world.car.vector.getNegate().vy;
+
+			if(this.emiter.absDistance(this.last.point) >=30 ) {
+				let fakeVector = new Vector(this.emiter.x - this.last.point.x ,this.emiter.y - this.last.point.y );
+				fakeVector.rotateTo(this.angle+180);
+				this.emiter.x = this.emiter.x + fakeVector.vx;
+				this.emiter.y = this.emiter.y + fakeVector.vy;
+				
+				// this.emiterv.rotateTo(this.angle+180);
+				// this.emiter.x = this.emiter.x + this.emiterv.vx;
+				// this.emiter.y = this.emiter.y + this.emiterv.vy;
+				this.emit();
+			}
+
+			this.angle = this.angle + Math.random()/3 * this.direct;
+			if(this.angle>180) {
+				this.direct = -1;
+			}
+			if(this.angle<0) {
+				this.direct = 1;
+			}
+			this.width = this.width + getRandomInt(-30,30) * (Math.random() > 0.95);
+			if(this.width> roadMaxWidth) {
+				this.width = roadMaxWidth;
+			}
+			if(this.width < roadMinWidth) {
+				this.width = roadMinWidth;
+			}
+
 		}
 
+		checkCollision() {
+			this.left.forEach(obj =>  {
+				if (game.world.car.isColliding(obj.point)) {
+					gameOver();
+			}});
+			this.right.forEach(obj =>  {
+				if (game.world.car.isColliding(obj.point)) {
+					gameOver();
+			}});		
 	  }
+	  generateBonus() { 
+		  	if(Math.random()> 0.90) {
+				  	var dist = getRandomInt(-this.width/2 , this.width/2);
+					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
+					fakePoint.rotatePoint(this.emiter, this.angle+90);
+					let bonus = new Bonus(fakePoint, new Vector(0,0), 0, "bonus");
+					game.world.gameObjects.push(bonus);
+			}
+		 }
+	 generateObstacle() { 
+		  	if(Math.random()> 0.94) {
+				  	var dist = getRandomInt(-this.width/2 , this.width/2);
+					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
+					fakePoint.rotatePoint(this.emiter, this.angle+90);
+					let bonus = new Obstacle(fakePoint, new Vector(0,0), 0, "obstacle");
+					game.world.gameObjects.push(bonus);
+			}
+		 }
+	}
 
 	  class World {
 		 constructor() {
@@ -320,22 +402,16 @@
 			 this.angle = 0;
 		 	 this.zoom = worldZoom;
 
-			  for (var step = 0; step < 300; step++) {
-				let point1 = new Point(getRandomInt(-worldRadius, worldRadius) , getRandomInt(-worldRadius, worldRadius));
-				let obstacle = new Obstacle(point1, new Vector(0,0), 0, "obstacle");
-				this.gameObjects.push(obstacle);
-			  }
 		 }
 
 		 draw() {
+			this.road.draw();
 			this.gameObjects.forEach(obj =>  {
 				if(isVisible(obj.point)) {
 					obj.draw();
 				}
 			});
 			this.car.draw();
-			this.road.emit();
-			this.road.draw();
 		 }
 
 		 update() {
@@ -364,10 +440,11 @@
 		 checkCollision() {
 			let tempObjects = new Array(); 
 			this.gameObjects.forEach(obj =>  {
-				if (10 <= obj.point.absDistance(this.car.point)) {
+				if (!game.world.car.isColliding(obj.point)) {
 					tempObjects.push(obj);
 				} else {
-					if(obj.type == "obstacle") {points++;}
+					if(obj.type == "bonus") {points++;}
+					if(obj.type == "obstacle") {gameOver();}
 				}
 			});
 			this.gameObjects = tempObjects;
@@ -443,6 +520,9 @@
 		context.lineWidth = 1;
 		context.strokeStyle = '#003300';
 		context.stroke();
+
+		context.font = "70pt sans-serif";
+        context.strokeText(textBanner, screenSizeX/2 - (context.measureText(textBanner)).width/2, 300);	
 	}
 
 	function timeLoop() {
@@ -473,31 +553,45 @@
 		if (kc === 13) window.location.reload();
 	};
 	}
-		 
-	window.onkeyup = function(e) {
-		var kc = e.keyCode;
-		e.preventDefault();
+	
+	function keys() {
+		clearInterval(t3);
+		window.onkeyup = function(e) {
+			var kc = e.keyCode;
+			e.preventDefault();
 
-		if (kc === 37) Keys.right = false;
-		if (kc === 39) Keys.left = false;
-		if (kc === 38) Keys.up = false;
-		if (kc === 40) Keys.down = false;
-		if (kc === 32) Keys.space = false;
-	};
-	window.onkeydown = function(e) {
-		var kc = e.keyCode;
-		e.preventDefault();
+			if (kc === 37) Keys.right = false;
+			if (kc === 39) Keys.left = false;
+			if (kc === 38) Keys.up = false;
+			if (kc === 40) Keys.down = false;
+			if (kc === 32) Keys.space = false;
+		};
+		window.onkeydown = function(e) {
+			var kc = e.keyCode;
+			e.preventDefault();
 
-		if (kc === 37) Keys.right = true; 
-		if (kc === 39) Keys.left = true;
-		if (kc === 38) Keys.up = true;
-		if (kc === 40) Keys.down = true;
-		if (kc === 32) Keys.space = true;
-	};
+			if (kc === 37) Keys.right = true; 
+			if (kc === 39) Keys.left = true;
+			//if (kc === 38) Keys.up = true;
+			//if (kc === 40) Keys.down = true;
+			if (kc === 32) Keys.space = true;
+		};
+	}
+
+	function intro() {
+		textBanner = "Ready?";
+		setTimeout(function(){ textBanner = "Steady?"; }, 1000);	
+		setTimeout(function(){ textBanner = "GO!!"; }, 2000);	
+		setTimeout(function(){ textBanner = ""; bonusFlag = true; obstacleFlag = true; }, 3000);	
+	} 
 
 	let game = new Game();
 	var t1=setInterval(mainLoop,20);
 	var t2=setInterval(timeLoop,1000);
+	game.world.car.vector = new Vector(0,-carMaxAccelerate);
+	intro();
+	var t3=setInterval(keys,3000);
+
 	  
 	</script>
 </body>
