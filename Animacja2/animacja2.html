@@ -20,6 +20,9 @@
 	  
 	  var screenSizeX = 800;
 	  var screenSizeY = 600;
+	  var screenCenter = new Point(screenSizeX/2, screenSizeY/2);
+	  var worldZoom = 1;
+	  var worldRadius = Math.sqrt(screenCenter.x * screenCenter.x + screenCenter.y * screenCenter.y) * 2;
 
 	  var carSizeX = 10;
 	  var carSizeY = 15;
@@ -56,6 +59,8 @@
 
 	  class World {
 		 objects = new Array(); 
+		 angle = 0;
+		 zoom = worldZoom;
 
 		 draw() {
 			objects.forEach(obj =>  {
@@ -67,6 +72,17 @@
 			objects.forEach(obj =>  {
 				obj.update();
 			});
+		 }
+
+		 clean() {
+			tempObjects = new Array(); 
+			objects.forEach(obj =>  {
+				distance = Math.hypot(obj.point.x - screenCenter.x, obj.point.y - screenCenter.y);
+				if (worldRadius < Math.abs(distance)) {
+					tempObjects.add(obj);
+				}
+			});
+			objects = tempObjects;
 		 }
 	  }
 
