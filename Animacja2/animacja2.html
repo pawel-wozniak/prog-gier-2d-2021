@@ -108,6 +108,7 @@
 	  var bonusFlag = false; 
 	  var obstacleFlag = false; 
 	  var lineFlag = false; 
+	  var lineCounter = 0; 
 
 	  var Keys = {
 		space: false,
@@ -288,10 +289,20 @@
 				} 
 				old = obj;
 			});
+			old = null;
 			this.center.forEach(obj =>  {
-				if(isVisible(obj.point)) {
-					obj.draw();
-				}
+				if(isVisible(obj.point) && old != null) {
+					context.beginPath();
+					context.moveTo(old.point.x , old.point.y);
+					context.lineTo(obj.point.x, obj.point.y);
+					context.closePath();
+					context.lineWidth = 14;
+					if(obj.type == 'roadCenterLine') {
+						context.strokeStyle = 'gray';
+						context.stroke();
+					} else {context.restore();		}							
+				} 
+				old = obj;
 			});
 		}
 
@@ -342,12 +353,17 @@
 		emit() {
 				if(bonusFlag) {this.generateBonus();}
 				if(obstacleFlag) {this.generateObstacle();}
-				this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "last");			
-				this.center.push(new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "roadCenter"));
+				this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , "last");
+
+				let typeLine = 'roadCenter';
+				if(lineCounter > 3) {typeLine = 'roadCenterLine';}	
+				if(lineCounter == 6) {lineCounter =0;}
+				lineCounter ++;		
+				this.center.push(new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0,0), 0 , typeLine));
 				
 				let fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
 				fakePoint.rotatePoint(this.emiter, this.angle+90);
-				let typeLine = 'roadLeftRed';
+			    typeLine = 'roadLeftRed';
 				if(lineFlag) {typeLine = 'roadLeftWhite';}
 				this.left.push(new GameObject(fakePoint, new Vector(0,0), 0 , typeLine));
 				
@@ -512,7 +528,7 @@
 	
 
 	 function isVisible(p) {
-		 if(p.x>0 && p.x < screenSizeX && p.y>0 && p.y<screenSizeY) {
+		 if(p.x>-30 && p.x < screenSizeX+30 && p.y>-30 && p.y<screenSizeY+30) {
 			 return true;
 		 }		 
 		return false;
