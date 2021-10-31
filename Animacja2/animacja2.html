@@ -107,6 +107,7 @@
 
 	  var bonusFlag = false; 
 	  var obstacleFlag = false; 
+	  var lineFlag = false; 
 
 	  var Keys = {
 		space: false,
@@ -136,7 +137,6 @@
 
 		  update() {
 			  this.move();
-			  this.draw();
 		  }
 
 		  move() {
@@ -256,15 +256,37 @@
 		}
 
 		draw() {
+			let old = null;
 			this.left.forEach(obj =>  {
-				if(isVisible(obj.point)) {
-					obj.draw();
-				}
+				if(isVisible(obj.point) && old != null) {
+					context.beginPath();
+					context.moveTo(old.point.x , old.point.y);
+					context.lineTo(obj.point.x, obj.point.y);
+					context.closePath();
+					context.lineWidth = 14;
+					if(obj.type == 'roadLeftRed') {
+						context.strokeStyle = 'red';
+					} else {context.strokeStyle = 'white';}
+					
+					context.stroke();
+				} 
+				old = obj;
 			});
+			old=null;
 			this.right.forEach(obj =>  {
-				if(isVisible(obj.point)) {
-					obj.draw();
-				}
+				if(isVisible(obj.point) && old != null) {
+					context.beginPath();
+					context.moveTo(old.point.x , old.point.y);
+					context.lineTo(obj.point.x, obj.point.y);
+					context.closePath();
+					context.lineWidth = 14;
+					if(obj.type == 'roadRightRed') {
+						context.strokeStyle = 'red';
+					} else {context.strokeStyle = 'white';}
+					
+					context.stroke();
+				} 
+				old = obj;
 			});
 			this.center.forEach(obj =>  {
 				if(isVisible(obj.point)) {
@@ -314,6 +336,7 @@
 			});
 			this.moveEmiter();
 			this.checkCollision();
+			this.draw();
 		}
 
 		emit() {
@@ -324,11 +347,17 @@
 				
 				let fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
 				fakePoint.rotatePoint(this.emiter, this.angle+90);
-				this.left.push(new GameObject(fakePoint, new Vector(0,0), 0 , "roadLeft"));
+				let typeLine = 'roadLeftRed';
+				if(lineFlag) {typeLine = 'roadLeftWhite';}
+				this.left.push(new GameObject(fakePoint, new Vector(0,0), 0 , typeLine));
 				
+				typeLine = 'roadRightRed';
+				if(lineFlag) {typeLine = 'roadRightWhite';}
 				fakePoint = new Point(this.emiter.x + this.width/2, this.emiter.y);
 				fakePoint.rotatePoint(this.emiter, this.angle-90);
-				this.right.push(new GameObject(fakePoint, new Vector(0,0), 0 , "roadRight"));
+				this.right.push(new GameObject(fakePoint, new Vector(0,0), 0 , typeLine));
+
+				lineFlag = !lineFlag; 
 		}
 
 		moveEmiter() {
@@ -473,6 +502,7 @@
 		game.world.update();
 
 		drawStatusBar();
+
 		// if(time===0) {gameOver();}
 	 }
 	 	 
