@@ -105,9 +105,10 @@
 	  var textBanner ="";
 
 	  var bonusFlag = true; 
-	  var obstacleFlag = false; 
+	  var obstacleFlag = true; 
 	  var lineFlag = false; 
 	  var lineCounter = 0; 
+	  var obstacleCounter = 0;
 
 	  var Keys = {
 		space: false,
@@ -219,11 +220,25 @@
 
 	  class Obstacle extends GameObject {
 		draw() {
+			var vert1 = new Point(this.point.x-40, this.point.y-10);
+			var vert2 = new Point(this.point.x-40, this.point.y+10);
+			var vert3 = new Point(this.point.x+40, this.point.y+10);
+			var vert4 = new Point(this.point.x+40, this.point.y-10);
+
+			vert1.rotatePoint(this.point, this.angle);
+			vert2.rotatePoint(this.point, this.angle);
+			vert3.rotatePoint(this.point, this.angle);
+			vert4.rotatePoint(this.point, this.angle);
+
 			context.beginPath();
-			context.rect(this.point.x-5, this.point.y-5, 10, 10);
-			context.fillStyle = "gray";
+			context.moveTo(vert1.x, vert1.y);
+			context.lineTo(vert2.x, vert2.y);
+			context.lineTo(vert3.x, vert3.y);
+			context.lineTo(vert4.x, vert4.y);
+			context.closePath();
+			context.fillStyle = "brown";
 			context.fill();
-			context.lineWidth = 2;
+			context.lineWidth = 3 ;
 			context.strokeStyle = '#003300';
 			context.stroke();
 		  }
@@ -232,7 +247,7 @@
 	  class Bonus extends GameObject {
 		draw() {
 			context.beginPath();
-			context.rect(this.point.x-15, this.point.y-15, 30, 30);
+			context.arc(this.point.x, this.point.y, 15, 0, 2 * Math.PI);
 			context.fillStyle = "gold";
 			context.fill();
 			context.lineWidth = 3;
@@ -267,7 +282,7 @@
 						context.closePath();
 						context.lineWidth = game.world.road.width+20;
 
-						context.strokeStyle = 'brown';
+						context.strokeStyle = 'DimGray';
 						context.stroke();	
 				}
 				old = obj;
@@ -284,7 +299,7 @@
 						context.closePath();
 						context.lineWidth = game.world.road.width;
 
-						context.strokeStyle = 'brown';
+						context.strokeStyle = 'DimGray';
 						context.stroke();	
 				}
 				old = obj;
@@ -453,18 +468,15 @@
 			}
 		 }
 	 generateObstacle() { 
-		  	if(Math.random()> 0.94) {
-
-
-					// here check left or right and generate simple rectangle
-
-
-				  	var dist = getRandomInt(-this.width/2 , this.width/2);
+		  	if(Math.random()> 0.90 && obstacleCounter > 30) {
+				  	obstacleCounter = 0;
+				  	var dist = Math.random() > 0.5 ? -this.width/4 : this.width/4;
 					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
 					fakePoint.rotatePoint(this.emiter, this.angle+90);
-					let bonus = new Obstacle(fakePoint, new Vector(0,0), 0, "obstacle");
+					let bonus = new Obstacle(fakePoint, new Vector(0,0), this.angle+90, "obstacle");
 					game.world.gameObjects.push(bonus);
 			}
+			obstacleCounter ++;
 		 }
 	}
 
@@ -666,7 +678,7 @@
 		textBanner = "Ready?";
 		setTimeout(function(){ textBanner = "Steady?"; }, 1000);	
 		setTimeout(function(){ textBanner = "GO!!"; }, 2000);	
-		setTimeout(function(){ textBanner = ""; bonusFlag = true; obstacleFlag = false; game.world.car.vector = new Vector(0,-carMaxAccelerate);}, 3000);	
+		setTimeout(function(){ textBanner = ""; bonusFlag = true; obstacleFlag = true; game.world.car.vector = new Vector(0,-carMaxAccelerate);}, 3000);	
 	} 
 
 	function increaseDifficulty() {
