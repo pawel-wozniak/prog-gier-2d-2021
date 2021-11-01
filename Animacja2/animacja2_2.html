@@ -1,0 +1,776 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<title>Animacja 2</title>
+	<meta name="description" content="Animacja 2">
+	<meta name="author" content="Pawel Wozniak, 224868">
+
+</head>
+
+<body>
+	<canvas id="canvas" width="800" height="600"></canvas>
+
+	<script>
+		var canvas = document.getElementById('canvas');
+		var context = canvas.getContext('2d');
+
+		class Point {
+			constructor(x, y) {
+				this.x = x;
+				this.y = y;
+			}
+
+			rotatePoint(center, angle) {
+				var s = Math.sin(Math.PI * angle / 180);
+				var c = Math.cos(Math.PI * angle / 180);
+
+				let tempPoint = new Point(this.x - center.x, this.y - center.y);
+				this.x = (tempPoint.x * c - tempPoint.y * s) + center.x;
+				this.y = (tempPoint.x * s + tempPoint.y * c) + center.y;
+			}
+
+			absDistance(p) {
+				return Math.abs(Math.hypot(this.x - p.x, this.y - p.y));
+			}
+		}
+		class Vector {
+			constructor(vx, vy) {
+				this.vx = vx;
+				this.vy = vy;
+			}
+
+			length() {
+				return Math.abs(Math.sqrt(this.vx * this.vx + this.vy * this.vy));
+			}
+
+			getNormalized() {
+				if (this.length() == 0) {
+					return new Vector(0, 0);
+				}
+				return new Vector(this.vx / this.length(), this.vy / this.length());
+			}
+
+			setLength(value) {
+				var newVX = this.getNormalized().vx * value;
+				var newVY = this.getNormalized().vy * value;
+				this.vx = newVX;
+				this.vy = newVY;
+			}
+
+			rotateTo(angle) {
+				var s = Math.sin(Math.PI * angle / 180);
+				var c = Math.cos(Math.PI * angle / 180);
+
+				var vecLength = this.length();
+
+				this.vx = vecLength * c;
+				this.vy = vecLength * s;
+			}
+
+			getNegate() {
+				return new Vector(-this.vx, -this.vy);
+			}
+
+		}
+
+		var screenSizeX = 800;
+		var screenSizeY = 600;
+		var screenCenter = new Point(screenSizeX / 2, screenSizeY / 2);
+		var worldZoom = 1;
+		var worldRadius = Math.sqrt(screenCenter.x * screenCenter.x + screenCenter.y * screenCenter.y) * 10;
+
+		var carSizeX = 25;
+		var carSizeY = 35;
+		var carCollisionCircleRadius = 25;
+		var carCenter = new Point(screenSizeX / 2, screenSizeY / 2 + 100);
+		var carMaxAccelerate = 6;
+
+		var roadMaxWidth = 300;
+		var roadMinWidth = 200;
+		var roadMaxAngle = 0;
+		var roadMinAngle = 180;
+
+		var points = 0;
+		var time = 30;
+
+		var textStatus = "WEEIArace";
+		var textPointsBase = "Points: ";
+		var textTimeBase = "Time: ";
+		var textPoints = textPointsBase + points;
+		var textTime = textTimeBase + time;
+		var textBanner = "";
+
+		var bonusFlag = false;
+		var obstacleFlag = true;
+		var lineFlag = false;
+		var lineCounter = 0;
+		var obstacleCounter = 0;
+
+		var Keys = {
+			space: false,
+			left: false,
+			right: false,
+			up: false,
+			down: false
+		};
+
+		class GameObject {
+			constructor(point, vector, angle, type) {
+				this.point = point;
+				this.vector = vector;
+				this.angle = angle;
+				this.type = type;
+			}
+
+			draw() {
+				context.beginPath();
+				context.rect(this.point.x - 2, this.point.y + 2, 4, 4);
+				context.fillStyle = "orange";
+				context.fill();
+				context.lineWidth = 3;
+				context.strokeStyle = '#003300';
+				context.stroke();
+			}
+
+			update() {
+				this.move();
+			}
+
+			move() {
+				this.point.x = this.point.x + this.vector.vx;
+				this.point.y = this.point.y + this.vector.vy;
+			}
+		}
+
+		class Car extends GameObject {
+			draw() {
+				var vert1 = new Point(this.point.x - carSizeX, this.point.y - carSizeY);
+				var vert2 = new Point(this.point.x - carSizeX, this.point.y + carSizeY);
+				var vert3 = new Point(this.point.x + carSizeX, this.point.y + carSizeY);
+				var vert4 = new Point(this.point.x + carSizeX, this.point.y - carSizeY);
+
+				vert1.rotatePoint(this.point, this.angle);
+				vert2.rotatePoint(this.point, this.angle);
+				vert3.rotatePoint(this.point, this.angle);
+				vert4.rotatePoint(this.point, this.angle);
+
+				context.beginPath();
+				context.moveTo(vert1.x, vert1.y);
+				context.lineTo(vert2.x, vert2.y);
+				context.lineTo(vert3.x, vert3.y);
+				context.lineTo(vert4.x, vert4.y);
+				context.closePath();
+				context.fillStyle = "blue";
+				context.fill();
+				context.lineWidth = 8;
+				context.strokeStyle = 'black';
+				context.stroke();
+
+				this.drawWheel(new Point(this.point.x - carSizeX, this.point.y - carSizeY+15));
+				this.drawWheel(new Point(this.point.x - carSizeX, this.point.y - carSizeY+55));
+				this.drawWheel(new Point(this.point.x + carSizeX, this.point.y - carSizeY+15));
+				this.drawWheel(new Point(this.point.x + carSizeX, this.point.y - carSizeY+55));
+
+				this.drawLights(new Point(this.point.x - carSizeX+10, this.point.y - carSizeY+80));
+
+				this.drawLights(new Point(this.point.x + carSizeX-10, this.point.y - carSizeY+80));
+
+			}
+
+			accelerate() {
+				var newLength = this.vector.length() + 0.1;
+				if (newLength > carMaxAccelerate) {
+					newLength = carMaxAccelerate;
+				}
+				let fakeVektor = new Vector(1, 1);
+				fakeVektor.rotateTo(this.angle + 90);
+				fakeVektor.setLength(newLength);
+				this.vector = fakeVektor;
+			}
+
+			decelerate() {
+				var newLength = this.vector.length() - 0.1;
+				if (newLength < 0) {
+					newLength = 0;
+				}
+				let fakeVektor = new Vector(1, 1);
+				fakeVektor.rotateTo(this.angle + 90);
+				fakeVektor.setLength(newLength);
+				this.vector = fakeVektor;
+			}
+
+			rotateLeft() {
+				this.angle = this.angle + this.vector.length() / 3;
+				if (this.angle > 360) { this.angle = this.angle - 360; }
+				if (this.angle < 0) { this.angle = 360 + this.angle; }
+				this.vector.rotateTo(this.angle + 90);
+			}
+
+			rotateRight() {
+				this.angle = this.angle - this.vector.length() / 3;
+				if (this.angle > 360) { this.angle = this.angle - 360; }
+				if (this.angle < 0) { this.angle = 360 + this.angle; }
+				this.vector.rotateTo(this.angle + 90);
+			}
+
+			isColliding(point) {
+				if (point.x >= this.point.x - carSizeX &&
+					point.x <= this.point.x + carSizeX &&
+					point.y >= this.point.y - carSizeY &&
+					point.y <= this.point.y + carSizeY) {
+					return true;
+				}
+				return false;
+			}
+			drawWheel(p) {
+				p.rotatePoint(this.point, this.angle);
+				context.beginPath();
+				context.arc(p.x, p.y, 8, 0, 2 * Math.PI);
+				context.fillStyle = "black";
+				context.fill();
+				context.lineWidth = 2; 
+				context.strokeStyle = 'black';
+				context.stroke();
+			}
+			drawLights(p) {
+				let p1 = new Point(p.x,p.y+40);
+				p.rotatePoint(this.point, this.angle);
+				p1.rotatePoint(this.point, this.angle);
+
+				var grad= context.createLinearGradient(p.x, p.y, p1.x, p1.y);
+				grad.addColorStop(0, "rgba(255,255,0,255)");
+				grad.addColorStop(1, "rgba(255,255,0,0)");
+				context.strokeStyle = grad;
+				context.lineCap = "round";
+
+				context.beginPath();
+				context.moveTo(p.x,p.y);
+				context.lineTo(p1.x,p1.y);
+				context.lineWidth = 20; 
+				context.stroke();
+			}
+		}
+
+		class Obstacle extends GameObject {
+			draw() {
+				var vert1 = new Point(this.point.x - 40, this.point.y - 10);
+				var vert2 = new Point(this.point.x - 40, this.point.y + 10);
+				var vert3 = new Point(this.point.x + 40, this.point.y + 10);
+				var vert4 = new Point(this.point.x + 40, this.point.y - 10);
+
+				vert1.rotatePoint(this.point, this.angle);
+				vert2.rotatePoint(this.point, this.angle);
+				vert3.rotatePoint(this.point, this.angle);
+				vert4.rotatePoint(this.point, this.angle);
+
+				context.beginPath();
+				context.moveTo(vert1.x, vert1.y);
+				context.lineTo(vert2.x, vert2.y);
+				context.lineTo(vert3.x, vert3.y);
+				context.lineTo(vert4.x, vert4.y);
+				context.closePath();
+				context.fillStyle = "RebeccaPurple";
+				context.fill();
+				context.lineWidth = 3;
+				context.strokeStyle = '#003300';
+				context.stroke();
+			}
+			isColliding(car) {
+				var vert1 = new Point(this.point.x - 40, this.point.y - 10);
+				var vert2 = new Point(this.point.x - 40, this.point.y + 10);
+				var vert3 = new Point(this.point.x + 40, this.point.y + 10);
+				var vert4 = new Point(this.point.x + 40, this.point.y - 10);
+
+				vert1.rotatePoint(this.point, this.angle);
+				vert2.rotatePoint(this.point, this.angle);
+				vert3.rotatePoint(this.point, this.angle);
+				vert4.rotatePoint(this.point, this.angle);
+
+				if(car.isColliding(vert1) ||
+					car.isColliding(vert2) ||
+					car.isColliding(vert3) ||
+					car.isColliding(vert4)) {
+						gameOver();
+						return true;
+					}
+					return false;
+			}
+		}
+
+		class Bonus extends GameObject {
+			draw() {
+				context.beginPath();
+				context.arc(this.point.x, this.point.y, 15, 0, 2 * Math.PI);
+				context.fillStyle = "gold";
+				context.fill();
+				context.lineWidth = 3; 
+				context.strokeStyle = '#003300';
+				context.stroke();
+			}
+			isColliding(car) {
+				var vert1 = new Point(this.point.x - 15, this.point.y - 15);
+				var vert2 = new Point(this.point.x - 15, this.point.y + 15);
+				var vert3 = new Point(this.point.x + 15, this.point.y + 15);
+				var vert4 = new Point(this.point.x + 15, this.point.y - 15);
+
+				vert1.rotatePoint(this.point, this.angle);
+				vert2.rotatePoint(this.point, this.angle);
+				vert3.rotatePoint(this.point, this.angle);
+				vert4.rotatePoint(this.point, this.angle);
+
+				if(car.isColliding(vert1) ||
+					car.isColliding(vert2) ||
+					car.isColliding(vert3) ||
+					car.isColliding(vert4)) {
+						points = points +1;
+						return true;
+					}
+				return false;
+			}
+		}
+
+		class Road {
+			constructor() {
+				this.center = new Array();
+				this.left = new Array();
+				this.right = new Array();
+				this.emiter = new Point(screenCenter.x, screenCenter.y - worldRadius + 400);
+				this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0, 0), 0, "last");
+				this.emiterv = new Vector(30, 0);
+				this.width = roadMaxWidth;
+				this.angle = 90;
+				this.direct = 1;
+			}
+
+			draw() {
+				let old = null;
+				var filtered = this.center.filter(function (element, index, array) {
+					return (index % 2 === 0);
+				});
+				filtered.forEach(obj => {
+					if (old != null) {
+						context.beginPath();
+						context.moveTo(old.point.x, old.point.y);
+						context.lineTo(obj.point.x, obj.point.y);
+						context.closePath();
+						context.lineWidth = game.world.road.width + 20;
+
+						context.strokeStyle = 'DimGray';
+						context.stroke();
+					}
+					old = obj;
+				});
+				old = null;
+				filtered = this.center.filter(function (element, index, array) {
+					return (index % 2 === 1);
+				});
+				filtered.forEach(obj => {
+					if (old != null) {
+						context.beginPath();
+						context.moveTo(old.point.x, old.point.y);
+						context.lineTo(obj.point.x, obj.point.y);
+						context.closePath();
+						context.lineWidth = game.world.road.width;
+
+						context.strokeStyle = 'DimGray';
+						context.stroke();
+					}
+					old = obj;
+				});
+				old = null;
+				this.left.forEach(obj => {
+					if (isVisible(obj.point) && old != null) {
+						context.beginPath();
+						context.moveTo(old.point.x, old.point.y);
+						context.lineTo(obj.point.x, obj.point.y);
+						context.closePath();
+						context.lineWidth = 20;
+						if (obj.type == 'roadLeftRed') {
+							context.strokeStyle = 'red';
+						} else { context.strokeStyle = 'white'; }
+
+						context.stroke();
+					}
+					old = obj;
+				});
+				old = null;
+				this.right.forEach(obj => {
+					if (isVisible(obj.point) && old != null) {
+						context.beginPath();
+						context.moveTo(old.point.x, old.point.y);
+						context.lineTo(obj.point.x, obj.point.y);
+						context.closePath();
+						context.lineWidth = 20;
+						if (obj.type == 'roadRightRed') {
+							context.strokeStyle = 'red';
+						} else { context.strokeStyle = 'white'; }
+
+						context.stroke();
+					}
+					old = obj;
+				});
+				old = null;
+				this.center.forEach(obj => {
+					if (isVisible(obj.point) && old != null) {
+						if (obj.type == 'roadCenterLine') {
+							context.beginPath();
+							context.moveTo(old.point.x, old.point.y);
+							context.lineTo(obj.point.x, obj.point.y);
+							context.closePath();
+							context.lineWidth = 14;
+							context.strokeStyle = 'white';
+							context.stroke();
+						}
+					}
+					old = obj;
+				});
+			}
+
+			tidy() {
+				let tempObjects = new Array();
+				this.left.forEach(obj => {
+					if (worldRadius >= obj.point.absDistance(screenCenter)) {
+						tempObjects.push(obj);
+					}
+				});
+				this.left = tempObjects;
+
+				tempObjects = new Array();
+				this.right.forEach(obj => {
+					if (worldRadius >= obj.point.absDistance(screenCenter)) {
+						tempObjects.push(obj);
+					}
+				});
+				this.right = tempObjects;
+
+				tempObjects = new Array();
+				this.center.forEach(obj => {
+					if (worldRadius >= obj.point.absDistance(screenCenter)) {
+						tempObjects.push(obj);
+					}
+				});
+				this.center = tempObjects;
+			}
+
+			update() {
+				this.left.forEach(obj => {
+					obj.vector = game.world.car.vector.getNegate();
+					obj.update();
+				});
+				this.right.forEach(obj => {
+					obj.vector = game.world.car.vector.getNegate();
+					obj.update();
+				});
+				this.center.forEach(obj => {
+					obj.vector = game.world.car.vector.getNegate();
+					obj.update();
+				});
+				this.moveEmiter();
+				this.checkCollision();
+				this.draw();
+			}
+
+			emit() {
+				if (bonusFlag) { this.generateBonus(); }
+				if (obstacleFlag) { this.generateObstacle(); }
+				this.last = new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0, 0), 0, "last");
+
+				let typeLine = 'roadCenter';
+				if (lineCounter > 3) { typeLine = 'roadCenterLine'; }
+				if (lineCounter == 6) { lineCounter = 0; }
+				lineCounter++;
+				this.center.push(new GameObject(new Point(this.emiter.x, this.emiter.y), new Vector(0, 0), 0, typeLine));
+
+				let fakePoint = new Point(this.emiter.x + this.width / 2, this.emiter.y);
+				fakePoint.rotatePoint(this.emiter, this.angle + 90);
+				typeLine = 'roadLeftRed';
+				if (lineFlag) { typeLine = 'roadLeftWhite'; }
+				this.left.push(new GameObject(fakePoint, new Vector(0, 0), 0, typeLine));
+
+				typeLine = 'roadRightRed';
+				if (lineFlag) { typeLine = 'roadRightWhite'; }
+				fakePoint = new Point(this.emiter.x + this.width / 2, this.emiter.y);
+				fakePoint.rotatePoint(this.emiter, this.angle - 90);
+				this.right.push(new GameObject(fakePoint, new Vector(0, 0), 0, typeLine));
+
+				lineFlag = !lineFlag;
+			}
+
+			moveEmiter() {
+				this.emiter.x = this.emiter.x + game.world.car.vector.getNegate().vx;
+				this.emiter.y = this.emiter.y + game.world.car.vector.getNegate().vy;
+
+				if (this.emiter.absDistance(this.last.point) >= 30) {
+					let fakeVector = new Vector(this.emiter.x - this.last.point.x, this.emiter.y - this.last.point.y);
+					fakeVector.rotateTo(this.angle + 180);
+					this.emiter.x = this.emiter.x + fakeVector.vx;
+					this.emiter.y = this.emiter.y + fakeVector.vy;
+					this.emit();
+				}
+			}
+
+			checkCollision() {
+				this.left.forEach(obj => {
+					if (game.world.car.isColliding(obj.point)) {
+						gameOver();
+					}
+				});
+				this.right.forEach(obj => {
+					if (game.world.car.isColliding(obj.point)) {
+						gameOver();
+					}
+				});
+			}
+			generateBonus() {
+				if (Math.random() > 0.90) {
+					var dist = getRandomInt(-this.width / 2 + 30, this.width / 2 - 30);
+					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
+					fakePoint.rotatePoint(this.emiter, this.angle + 90);
+					let bonus = new Bonus(fakePoint, new Vector(0, 0), 0, "bonus");
+					game.world.gameObjects.push(bonus);
+				}
+			}
+			generateObstacle() {
+				if (Math.random() > 0.90 && obstacleCounter > 20) {
+					obstacleCounter = 0;
+					var dist = Math.random() > 0.5 ? -this.width / 4 : this.width / 4;
+					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
+					fakePoint.rotatePoint(this.emiter, this.angle + 90);
+					let bonus = new Obstacle(fakePoint, new Vector(0, 0), this.angle + 90, "obstacle");
+					game.world.gameObjects.push(bonus);
+				}
+				obstacleCounter++;
+			}
+		}
+
+		class World {
+			constructor() {
+				this.car = new Car(new Point(screenCenter.x, screenCenter.y + 100), new Vector(0, 0), 180, "car");
+				this.road = new Road();
+				this.gameObjects = new Array();
+				this.angle = 0;
+				this.zoom = worldZoom;
+
+			}
+
+			draw() {
+				this.road.draw();
+				this.gameObjects.forEach(obj => {
+					if (isVisible(obj.point)) {
+						obj.draw();
+					}
+				});
+				this.car.draw();
+			}
+
+			update() {
+				this.gameObjects.forEach(obj => {
+					obj.vector = this.car.vector.getNegate();
+					obj.update();
+				});
+				this.tidy();
+				this.road.update();
+				this.road.tidy();
+				this.draw();
+				this.checkKeys();
+				this.checkCollision();
+			}
+
+			tidy() {
+				let tempObjects = new Array();
+				this.gameObjects.forEach(obj => {
+					if (worldRadius >= obj.point.absDistance(screenCenter)) {
+						tempObjects.push(obj);
+					}
+				});
+				this.gameObjects = tempObjects;
+			}
+
+			checkCollision() {
+				let tempObjects = new Array();
+				this.gameObjects.forEach(obj => {
+					if(!obj.isColliding(game.world.car)) {
+						tempObjects.push(obj);
+					}
+				});
+				this.gameObjects = tempObjects;
+			}
+
+			checkKeys() {
+				if (Keys.left) { this.car.rotateLeft() }
+				if (Keys.right) { this.car.rotateRight() }
+				if (Keys.up) { this.car.accelerate(); }
+				if (Keys.down) { this.car.decelerate(); }
+			}
+
+		}
+
+		class Game {
+			constructor() {
+				this.world = new World();
+			}
+		}
+
+		function mainLoop() {
+			clearScreen();
+			drawBackground();
+
+			game.world.update();
+
+			drawStage();
+			drawStatusBar();
+
+			if (time === 0) { gameOver(); }
+		}
+
+		function clearScreen() {
+			context.clearRect(0, 0, screenSizeX, screenSizeY);
+		}
+
+
+		function isVisible(p) {
+			if (p.x > -30 && p.x < screenSizeX + 30 && p.y > -30 && p.y < screenSizeY + 30) {
+				return true;
+			}
+			return false;
+		}
+
+		function getRandomInt(min, max) {
+			min = Math.ceil(min);
+			max = Math.floor(max);
+			return Math.floor(Math.random() * (max - min + 1)) + min;
+		}
+
+		function drawStatusBar() {
+			textPoints = textPointsBase + points;
+			textTime = textTimeBase + time;
+			context.font = '24px serif';
+			context.fillStyle = "black";
+			var textSize = context.measureText(textStatus);
+			context.fillText(textStatus, screenSizeX / 2 - (context.measureText(textStatus)).width / 2, 24);
+			context.fillText(textPoints, screenSizeX - 20 - textSize.width, 24);
+			context.fillText(textTime, 20, 24);
+		}
+
+		function drawStage() {
+			context.beginPath();
+			context.rect(0, 0, screenSizeX, 32);
+			context.closePath();
+			context.fillStyle = "white";
+			context.fill();
+			context.stroke;
+
+			context.beginPath();
+			context.rect(0, 0, screenSizeX, screenSizeY);
+			context.closePath();
+			context.lineWidth = 3;
+			context.strokeStyle = '#003300';
+			context.stroke();
+
+			context.font = "70pt sans-serif";
+			context.strokeText(textBanner, screenSizeX / 2 - (context.measureText(textBanner)).width / 2, 300);
+		}
+
+		function drawBackground() {
+			context.beginPath();
+			context.fillStyle = "Peru";
+			context.fillRect(3, 34, screenSizeX - 6, screenSizeY - 3 - 34);
+			context.lineWidth = 1;
+			context.strokeStyle = '#003300';
+			context.stroke();
+		}
+
+		function timeLoop() {
+			time = time - 1;
+			textTime = textTimeBase + time;
+		}
+
+		function gameOver() {
+			clearInterval(t1);
+			clearInterval(t2);
+			setTimeout(function () { showResult(); }, 100);
+		}
+
+		function showResult() {
+			context.fillStyle = "white";
+			context.fillRect(100, 100, screenSizeX - 200, screenSizeY - 200);
+			context.stroke();
+			context.font = "70pt sans-serif";
+			var result = "Wynik: " + points;
+			context.strokeText(result, screenSizeX / 2 - (context.measureText(result)).width / 2, 300);
+			context.font = "20pt sans-serif";
+			context.fillStyle = "black";
+			var text = "Press ENTER to try again";
+			context.fillText(text, screenSizeX / 2 - (context.measureText(text)).width / 2, 400);
+			context.stroke();
+			window.onkeyup = function (e) {
+				var kc = e.keyCode;
+				e.preventDefault();
+				if (kc === 13) window.location.reload();
+			};
+		}
+
+		function keys() {
+			clearInterval(t3);
+			window.onkeyup = function (e) {
+				var kc = e.keyCode;
+				e.preventDefault();
+
+				if (kc === 37) Keys.right = false;
+				if (kc === 39) Keys.left = false;
+				if (kc === 38) Keys.up = false;
+				if (kc === 40) Keys.down = false;
+				if (kc === 32) Keys.space = false;
+			};
+			window.onkeydown = function (e) {
+				var kc = e.keyCode;
+				e.preventDefault();
+
+				if (kc === 37) Keys.right = true;
+				if (kc === 39) Keys.left = true;
+				//if (kc === 38) Keys.up = true;
+				//if (kc === 40) Keys.down = true;
+				if (kc === 32) Keys.space = true;
+			};
+		}
+
+		function intro() {
+			textBanner = "Ready?";
+			setTimeout(function () { textBanner = "Steady?"; }, 1000);
+			setTimeout(function () { textBanner = "GO!!"; }, 2000);
+			setTimeout(function () { textBanner = ""; bonusFlag = false; obstacleFlag = true; game.world.car.vector = new Vector(0, -carMaxAccelerate); }, 3000);
+		}
+
+		function increaseDifficulty() {
+			carMaxAccelerate = carMaxAccelerate + 0.3;
+			let vectorOld = game.world.car.vector;
+			vectorOld.setLength(carMaxAccelerate);
+			game.world.car.vector = vectorOld;
+
+			game.world.road.width = game.world.road.width - 5;
+			if (this.width > roadMaxWidth) {
+				this.width = roadMaxWidth;
+			}
+			if (this.width < roadMinWidth) {
+				this.width = roadMinWidth;
+			}
+		}
+
+		let game = new Game();
+		var t1 = setInterval(mainLoop, 20);
+		var t2 = setInterval(timeLoop, 1000);
+		game.world.car.vector = new Vector(0, -carMaxAccelerate * 6);
+		intro();
+		var t3 = setInterval(keys, 3000);
+		var t4 = setInterval(increaseDifficulty, 3000);
+
+
+	</script>
+</body>
+
+</html>
