@@ -106,7 +106,7 @@
 		var textBanner = "";
 
 		var bonusFlag = true;
-		var obstacleFlag = true;
+		var obstacleFlag = false;
 		var lineFlag = false;
 		var lineCounter = 0;
 		var obstacleCounter = 0;
@@ -167,9 +167,19 @@
 				context.closePath();
 				context.fillStyle = "blue";
 				context.fill();
-				context.lineWidth = 2;
-				context.strokeStyle = '#003300';
+				context.lineWidth = 8;
+				context.strokeStyle = 'black';
 				context.stroke();
+
+				this.drawWheel(new Point(this.point.x - carSizeX, this.point.y - carSizeY+15));
+				this.drawWheel(new Point(this.point.x - carSizeX, this.point.y - carSizeY+55));
+				this.drawWheel(new Point(this.point.x + carSizeX, this.point.y - carSizeY+15));
+				this.drawWheel(new Point(this.point.x + carSizeX, this.point.y - carSizeY+55));
+
+				this.drawLights(new Point(this.point.x - carSizeX+10, this.point.y - carSizeY+80));
+
+				this.drawLights(new Point(this.point.x + carSizeX-10, this.point.y - carSizeY+80));
+
 			}
 
 			accelerate() {
@@ -217,6 +227,33 @@
 				}
 				return false;
 			}
+			drawWheel(p) {
+				p.rotatePoint(this.point, this.angle);
+				context.beginPath();
+				context.arc(p.x, p.y, 8, 0, 2 * Math.PI);
+				context.fillStyle = "black";
+				context.fill();
+				context.lineWidth = 2; 
+				context.strokeStyle = 'black';
+				context.stroke();
+			}
+			drawLights(p) {
+				let p1 = new Point(p.x,p.y+40);
+				p.rotatePoint(this.point, this.angle);
+				p1.rotatePoint(this.point, this.angle);
+
+				var grad= context.createLinearGradient(p.x, p.y, p1.x, p1.y);
+				grad.addColorStop(0, "rgba(255,255,0,255)");
+				grad.addColorStop(1, "rgba(255,255,0,0)");
+				context.strokeStyle = grad;
+				context.lineCap = "round";
+
+				context.beginPath();
+				context.moveTo(p.x,p.y);
+				context.lineTo(p1.x,p1.y);
+				context.lineWidth = 20; 
+				context.stroke();
+			}
 		}
 
 		class Obstacle extends GameObject {
@@ -243,6 +280,26 @@
 				context.strokeStyle = '#003300';
 				context.stroke();
 			}
+			isColliding(car) {
+				var vert1 = new Point(this.point.x - 40, this.point.y - 10);
+				var vert2 = new Point(this.point.x - 40, this.point.y + 10);
+				var vert3 = new Point(this.point.x + 40, this.point.y + 10);
+				var vert4 = new Point(this.point.x + 40, this.point.y - 10);
+
+				vert1.rotatePoint(this.point, this.angle);
+				vert2.rotatePoint(this.point, this.angle);
+				vert3.rotatePoint(this.point, this.angle);
+				vert4.rotatePoint(this.point, this.angle);
+
+				if(car.isColliding(vert1) ||
+					car.isColliding(vert2) ||
+					car.isColliding(vert3) ||
+					car.isColliding(vert4)) {
+						gameOver();
+						return true;
+					}
+					return false;
+			}
 		}
 
 		class Bonus extends GameObject {
@@ -251,9 +308,29 @@
 				context.arc(this.point.x, this.point.y, 15, 0, 2 * Math.PI);
 				context.fillStyle = "gold";
 				context.fill();
-				context.lineWidth = 3;
+				context.lineWidth = 3; 
 				context.strokeStyle = '#003300';
 				context.stroke();
+			}
+			isColliding(car) {
+				var vert1 = new Point(this.point.x - 15, this.point.y - 15);
+				var vert2 = new Point(this.point.x - 15, this.point.y + 15);
+				var vert3 = new Point(this.point.x + 15, this.point.y + 15);
+				var vert4 = new Point(this.point.x + 15, this.point.y - 15);
+
+				vert1.rotatePoint(this.point, this.angle);
+				vert2.rotatePoint(this.point, this.angle);
+				vert3.rotatePoint(this.point, this.angle);
+				vert4.rotatePoint(this.point, this.angle);
+
+				if(car.isColliding(vert1) ||
+					car.isColliding(vert2) ||
+					car.isColliding(vert3) ||
+					car.isColliding(vert4)) {
+						points = points +1;
+						return true;
+					}
+				return false;
 			}
 		}
 
@@ -437,16 +514,14 @@
 				}
 
 				var scale = Math.PI * (60 - time) / 30;
-				var move = Math.cos(scale) + 6 * Math.sin(30 * scale) + 3 * Math.cos(5 * scale);
 
-				this.angle = this.angle + 0.2 * scale * this.direct;
+				this.angle = this.angle + 0.3 * scale * this.direct;
 				if (this.angle > 180) {
 					this.direct = -1;
 				}
 				if (this.angle < 0) {
 					this.direct = 1;
 				}
-
 			}
 
 			checkCollision() {
@@ -463,7 +538,7 @@
 			}
 			generateBonus() {
 				if (Math.random() > 0.90) {
-					var dist = getRandomInt(-this.width / 2 + 10, this.width / 2 - 10);
+					var dist = getRandomInt(-this.width / 2 + 30, this.width / 2 - 30);
 					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
 					fakePoint.rotatePoint(this.emiter, this.angle + 90);
 					let bonus = new Bonus(fakePoint, new Vector(0, 0), 0, "bonus");
@@ -471,7 +546,7 @@
 				}
 			}
 			generateObstacle() {
-				if (Math.random() > 0.90 && obstacleCounter > 30) {
+				if (Math.random() > 0.90 && obstacleCounter > 20) {
 					obstacleCounter = 0;
 					var dist = Math.random() > 0.5 ? -this.width / 4 : this.width / 4;
 					let fakePoint = new Point(this.emiter.x + dist, this.emiter.y);
@@ -529,11 +604,8 @@
 			checkCollision() {
 				let tempObjects = new Array();
 				this.gameObjects.forEach(obj => {
-					if (!game.world.car.isColliding(obj.point)) {
+					if(!obj.isColliding(game.world.car)) {
 						tempObjects.push(obj);
-					} else {
-						if (obj.type == "bonus") { points++; }
-						if (obj.type == "obstacle") { gameOver(); }
 					}
 				});
 				this.gameObjects = tempObjects;
@@ -709,8 +781,6 @@
 
 
 	</script>
-</body>
-
 </body>
 
 </html>
