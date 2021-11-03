@@ -78,6 +78,7 @@
 
 		}
 
+
 		var screenSizeX = 800;
 		var screenSizeY = 600;
 		var screenCenter = new Point(screenSizeX / 2, screenSizeY / 2);
@@ -110,6 +111,9 @@
 		var lineFlag = false;
 		var lineCounter = 0;
 		var obstacleCounter = 0;
+		var gameOver = false;
+
+		var frame = null;
 
 		var Keys = {
 			space: false,
@@ -295,7 +299,7 @@
 					car.isColliding(vert2) ||
 					car.isColliding(vert3) ||
 					car.isColliding(vert4)) {
-						gameOver();
+						gameOver = true;
 						return true;
 					}
 					return false;
@@ -527,12 +531,12 @@
 			checkCollision() {
 				this.left.forEach(obj => {
 					if (game.world.car.isColliding(obj.point)) {
-						gameOver();
+						gameOver = true;
 					}
 				});
 				this.right.forEach(obj => {
 					if (game.world.car.isColliding(obj.point)) {
-						gameOver();
+						gameOver = true;
 					}
 				});
 			}
@@ -627,15 +631,20 @@
 		}
 
 		function mainLoop() {
-			clearScreen();
-			drawBackground();
+			if(!gameOver) {
+				clearScreen();
+				drawBackground();
 
-			game.world.update();
+				game.world.update();
 
-			drawStage();
-			drawStatusBar();
+				drawStage();
+				drawStatusBar();
 
-			if (time === 0) { gameOver(); }
+				if (time === 0) { gameOver = true; }
+				frame = window.requestAnimationFrame(mainLoop);
+			} else {
+				gameOverFunc();
+			}
 		}
 
 		function clearScreen() {
@@ -700,16 +709,18 @@
 			textTime = textTimeBase + time;
 		}
 
-		function gameOver() {
-			clearInterval(t1);
+		function gameOverFunc() {
+			window.cancelAnimationFrame(frame);
 			clearInterval(t2);
-			setTimeout(function () { showResult(); }, 100);
+			clearInterval(t4);
+			showResult();
 		}
 
 		function showResult() {
 			context.fillStyle = "white";
 			context.fillRect(100, 100, screenSizeX - 200, screenSizeY - 200);
 			context.stroke();
+			context.strokeStyle = '#003300';
 			context.font = "70pt sans-serif";
 			var result = "Wynik: " + points;
 			context.strokeText(result, screenSizeX / 2 - (context.measureText(result)).width / 2, 300);
@@ -723,6 +734,8 @@
 				e.preventDefault();
 				if (kc === 13) window.location.reload();
 			};
+			
+		
 		}
 
 		function keys() {
@@ -772,13 +785,13 @@
 		}
 
 		let game = new Game();
-		var t1 = setInterval(mainLoop, 20);
+
 		var t2 = setInterval(timeLoop, 1000);
-		game.world.car.vector = new Vector(0, -carMaxAccelerate * 6);
+		game.world.car.vector = new Vector(0, -carMaxAccelerate * 5);
 		intro();
 		var t3 = setInterval(keys, 3000);
 		var t4 = setInterval(increaseDifficulty, 3000);
-
+		frame = window.requestAnimationFrame(mainLoop);
 
 	</script>
 </body>
